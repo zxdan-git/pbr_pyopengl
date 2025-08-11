@@ -1,0 +1,15 @@
+# Python cache and build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+
+# VS Code settings (optional)
+.vscode/
+
+.DS_Store

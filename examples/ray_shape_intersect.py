@@ -2,7 +2,7 @@ from OpenGL import GL as gl
 import glfw
 import raytracing.glutil as glutil
 import raytracing.transform as transform
-from raytracing.shape import Shape, Sphere, Cube
+from raytracing.shape import Shape, Sphere, Cube, Triangle
 from raytracing.ray import Ray
 import raytracing.util as util
 import numpy as np
@@ -78,7 +78,8 @@ def ray_shape_intersect_test(window, program_id, shapes):
         , dtype = np.uint32)
     
     if shape.paint_mode() & Shape.PaintMode.FACE:
-        with glutil.create_index_buffer_object(shape.face_index() + index_offset):
+        with glutil.create_index_buffer_object(
+                shape.face_index() + index_offset):
             gl.glUniformMatrix4fv(
                     model_mat_loc,
                     1,
@@ -97,7 +98,8 @@ def ray_shape_intersect_test(window, program_id, shapes):
                 )
     
     if shape.paint_mode() & Shape.PaintMode.LINE:
-        with glutil.create_index_buffer_object(shape.line_index() + index_offset):
+        with glutil.create_index_buffer_object(
+                shape.line_index() + index_offset):
             gl.glUniformMatrix4fv(
                     model_mat_loc,
                     1,
@@ -130,12 +132,20 @@ if __name__ == "__main__":
     cube.set_paint_mode(Sphere.PaintMode.FACE_AND_LINE)
     shapes.append(cube)
 
+    triangle = Triangle(
+        np.array([0, 0.5, 0], dtype = np.float32),
+        np.array([-0.5, -0.5, 0], dtype = np.float32),
+        np.array([0.5, -0.5, 0], dtype = np.float32),
+        )
+    triangle.set_paint_mode(Sphere.PaintMode.FACE_AND_LINE)
+    shapes.append(triangle)
+
     vertex = np.concatenate([shape.vertex() for shape in shapes], axis = 0)
     with glutil.create_main_window(1024, 768) as window:
         glfw.set_key_callback(window, key_callback)
         with glutil.load_shaders(
-            "shaders/shape.vertex",
-            "shaders/shape.fragment") as program_id:
+            "shaders/ray_shape_intersect.vertex",
+            "shaders/ray_shape_intersect.fragment") as program_id:
             with glutil.create_vertex_array_object():
                 with glutil.create_vertex_buffer_object(vertex.flatten()):
                         setup_scene(window, program_id)

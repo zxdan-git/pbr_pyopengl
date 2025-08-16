@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from raytracing.ray import Ray
 from raytracing.bounding_box import AABB
+import raytracing.util as util
 from enum import IntFlag
 
 class Shape(ABC):
@@ -174,5 +175,58 @@ class Cube(Shape):
         t_ray = Ray.transform(ray, self._inv_transform)
         bbx = AABB(-1, 1, -1, 1, -1, 1)
         return bbx.ray_intersect(t_ray)
+    
+
+class Triangle(Shape):
+    def __init__(self, v0, v1, v2):
+        super().__init__()
+        self._vertex = np.array([v0, v1, v2], dtype = np.float32)
+        self._face_index = np.array([0, 1, 2], dtype = np.uint32)
+        self._line_index = np.array([0, 1, 1, 2, 2, 0], dtype = np.uint32)
+    
+    def ray_intersect(self, ray):
+        '''
+        alpha (v1 - v0) + beta (v2 - v0) + v0 = o + t.d
+        (v1 - v0, v2 - v0, -d) @ (alpha, beta, t) = o - v0
+        alpha, beta, t = inv((v1 - v0, v2 - v0, -d)) @ (o - v0)
+        '''
+        t_ray = Ray.transform(ray, self._inv_transform)
+        v0, v1, v2 = self._vertex
+        cofficient = np.array(
+                [v1 - v0, v2 - v0, -t_ray.dir],
+                dtype = np.float32
+            )
+        b = t_ray.pos - v0
+        det = util.det3x3(cofficient)
+        if np.isclose(det, 0):
+            return None
+        
+        inv_det = 1 / det
+
+        alpha = util.det3x3(np.array(
+                [b, v2 - v0, -t_ray.dir],
+                dtype = np.float32
+            )) * inv_det
+        if alpha < 0 or alpha > 1:
+            return None
+        
+        beta = util.det3x3(np.array(
+                [v1 - v0, b, -t_ray.dir],
+                dtype = np.float32
+            )) * inv_det
+        if beta < 0 or beta > 1:
+            return None
+        
+        gamma = alpha + beta
+        if gamma < 0 or gamma > 1:
+            return None
+        
+        t = util.det3x3(np.array(
+                [v1 - v0, v2 - v0, b],
+                dtype = np.float32
+            )) * inv_det
+        if t < 0:
+            return None
+        return t
 
 

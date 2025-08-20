@@ -17,32 +17,48 @@ class Shape(ABC):
         self._line_index = None
         self._transform = np.identity(4)
         self._inv_transform = np.identity(4)
-        self.__paint_mode = self.PaintMode.FACE
+        self.paint_mode = self.PaintMode.FACE
+        self._bbx = AABB()
     
+    @property
     def vertex(self):
         return self._vertex
     
+    @property
     def face_index(self):
         return self._face_index
     
+    @property
     def line_index(self):
         return self._line_index
     
-    def set_transform(self, transform):
-        self._transform = transform
-        self._inv_transform = np.linalg.inv(transform)
-    
+    @property
     def transform(self):
         return self._transform
     
-    def set_paint_mode(self, paint_mode):
-        self.__paint_mode = paint_mode
-
-    def paint_mode(self):
-        return self.__paint_mode
+    @transform.setter
+    def transform(self, new_transform):
+        if np.array_equal(new_transform, self._transform):
+            return
+        self._transform = new_transform
+        self._inv_transform = np.linalg.inv(new_transform)
+        self._update_bounding_box()
+    
+    @property
+    def bounding_box(self):
+        return self._bbx
+    
+    def centroid(self):
+        return self._bbx.center()
     
     def ray_intersect(self, ray):
         return None
+    
+    def _update_bounding_box(self):
+        self._bbx = AABB()
+        for i in range(self._vertex.shape[0]):
+            t_pos = self._transform @ np.append(self._vertex[i], 1)
+            self._bbx.embrace(t_pos[:3])
     
 class Sphere(Shape):
     def __init__(self, nu, nv):
@@ -50,6 +66,7 @@ class Sphere(Shape):
         self.__generate_vertex(nu, nv)
         self.__generate_face_index(nu, nv)
         self.__generate_line_index(nu, nv)
+        self._bbx = AABB(-1, 1, -1, 1, -1, 1)
 
     def ray_intersect(self, ray):
         '''
@@ -170,6 +187,7 @@ class Cube(Shape):
             # back
             3, 2, 2, 6, 6, 7, 7, 3 
         ],dtype = np.uint32)
+        self._bbx = AABB(-1, 1, -1, 1, -1, 1)
     
     def ray_intersect(self, ray):
         t_ray = Ray.transform(ray, self._inv_transform)
@@ -183,6 +201,8 @@ class Triangle(Shape):
         self._vertex = np.array([v0, v1, v2], dtype = np.float32)
         self._face_index = np.array([0, 1, 2], dtype = np.uint32)
         self._line_index = np.array([0, 1, 1, 2, 2, 0], dtype = np.uint32)
+        for v in [v0, v1, v2]:
+            self._bbx.embrace(v)
     
     def ray_intersect(self, ray):
         '''

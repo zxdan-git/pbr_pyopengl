@@ -3,7 +3,12 @@ from raytracing.interval import Interval
 from raytracing.ray import Ray
 
 class AABB:
-    def __init__(self, x_min, x_max, y_min, y_max, z_min, z_max):
+    def __init__(
+        self,
+        x_min = np.inf, x_max = -np.inf,
+        y_min = np.inf, y_max = -np.inf,
+        z_min = np.inf, z_max = -np.inf
+    ):
         self.__inv_x = Interval(x_min, x_max)
         self.__inv_y = Interval(y_min, y_max)
         self.__inv_z = Interval(z_min, z_max)
@@ -30,6 +35,20 @@ class AABB:
             inv_z.lower, inv_z.upper
             )
     
+    def embrace(self, pos):
+        self.__inv_x = Interval.union(self.range_x(), Interval(pos[0], pos[0]))
+        self.__inv_y = Interval.union(self.range_y(), Interval(pos[1], pos[1]))
+        self.__inv_z = Interval.union(self.range_z(), Interval(pos[2], pos[2]))
+
+    def center(self):
+        if self.empty():
+            raise ValueError("Empty bounding box has no center.")
+        return np.array([
+            self.__inv_x.to_array().mean(),
+            self.__inv_y.to_array().mean(),
+            self.__inv_z.to_array().mean(),
+        ], dtype = np.float32)
+    
     def range_x(self):
         return self.__inv_x
     
@@ -49,9 +68,9 @@ class AABB:
         raise IndexError("index out of range")
 
     def empty(self):
-        return not self.__inv_x.empty() and \
-               not self.__inv_y.empty() and \
-               not self.__inv_z.empty()
+        return self.__inv_x.empty() or \
+               self.__inv_y.empty() or \
+               self.__inv_z.empty()
     
     def ray_intersect(self, ray):
         time_inv = Interval(-np.inf, np.inf)

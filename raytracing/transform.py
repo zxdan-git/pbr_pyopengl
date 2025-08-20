@@ -126,6 +126,11 @@ def scale(sx, sy, sz):
         ],
         dtype = np.float32)
 
+def translate(tx, ty, tz):
+    mat = np.identity(4)
+    mat[:3,3] = np.array([tx, ty, tz], dtype = np.float32)
+    return mat
+
 def rotate_X(angle):
     c = np.cos(angle)
     s = np.sin(angle)

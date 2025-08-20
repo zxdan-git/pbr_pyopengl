@@ -17,6 +17,11 @@ class Interval:
             lower = np.max([inv_1.lower, inv_2.lower]),
             upper = np.min([inv_1.upper, inv_2.upper]))
     
+    def size(self):
+        if self.empty():
+            return 0
+        return self.upper - self.lower
+    
     def empty(self):
         return self.lower > self.upper
     

@@ -4,9 +4,10 @@ import glfw
 import logging
 import ctypes
 
+
 # Create a glfw window with given window width, height, and title.
 @contextlib.contextmanager
-def create_main_window(width, height, title = __name__):
+def create_main_window(width, height, title=__name__):
     if not glfw.init():
         sys.exit(1)
     try:
@@ -30,6 +31,7 @@ def create_main_window(width, height, title = __name__):
     finally:
         glfw.terminate()
 
+
 # Create and bind a vertex array object.
 @contextlib.contextmanager
 def create_vertex_array_object():
@@ -40,6 +42,7 @@ def create_vertex_array_object():
     finally:
         gl.glBindVertexArray(0)
         gl.glDeleteVertexArrays(1, [vertex_array_id])
+
 
 # Create and bind a vertex buffer object.
 @contextlib.contextmanager
@@ -52,22 +55,16 @@ def create_vertex_buffer_object(vertex_data):
             gl.GL_ARRAY_BUFFER,
             vertex_data.nbytes,
             vertex_data.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
-            gl.GL_STATIC_DRAW
+            gl.GL_STATIC_DRAW,
         )
-        gl.glVertexAttribPointer(
-            vertex_attribute_id,
-            3,
-            gl.GL_FLOAT,
-            False,
-            0,
-            None
-        )
+        gl.glVertexAttribPointer(vertex_attribute_id, 3, gl.GL_FLOAT, False, 0, None)
         gl.glEnableVertexAttribArray(vertex_attribute_id)
         yield
     finally:
         gl.glDisableVertexAttribArray(vertex_attribute_id)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
         gl.glDeleteBuffers(1, [vertex_buffer_id])
+
 
 @contextlib.contextmanager
 def create_index_buffer_object(index_data):
@@ -78,18 +75,19 @@ def create_index_buffer_object(index_data):
             gl.GL_ELEMENT_ARRAY_BUFFER,
             index_data.nbytes,
             index_data.ctypes.data_as(ctypes.POINTER(ctypes.c_uint32)),
-            gl.GL_STATIC_DRAW
+            gl.GL_STATIC_DRAW,
         )
         yield
     finally:
         gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0)
         gl.glDeleteBuffers(1, [index_buffer_id])
 
+
 # Load vertex and fragment shaders and attached them to a program.
 @contextlib.contextmanager
 def load_shaders(vertex_shader_path, fragment_shader_path):
     log = logging.getLogger(__name__)
-    logging.basicConfig(level = logging.ERROR)
+    logging.basicConfig(level=logging.ERROR)
 
     program_id = gl.glCreateProgram()
     attached_shaders = []
@@ -97,7 +95,8 @@ def load_shaders(vertex_shader_path, fragment_shader_path):
         # Load and attach the vertex and fragment shaders.
         for shader_type, shader_path in zip(
             [gl.GL_VERTEX_SHADER, gl.GL_FRAGMENT_SHADER],
-            [vertex_shader_path, fragment_shader_path]):
+            [vertex_shader_path, fragment_shader_path],
+        ):
             with open(shader_path, "r") as shader_file:
                 shader_id = gl.glCreateShader(shader_type)
                 gl.glShaderSource(shader_id, shader_file.read())
@@ -109,7 +108,7 @@ def load_shaders(vertex_shader_path, fragment_shader_path):
                     sys.exit(1)
                 gl.glAttachShader(program_id, shader_id)
                 attached_shaders.append(shader_id)
-            
+
         # Link the program.
         gl.glLinkProgram(program_id)
         success = gl.glGetProgramiv(program_id, gl.GL_LINK_STATUS)
@@ -127,6 +126,7 @@ def load_shaders(vertex_shader_path, fragment_shader_path):
         gl.glUseProgram(0)
         gl.glDeleteProgram(program_id)
 
+
 def run_render_loop(window, render_func):
     while not glfw.window_should_close(window):
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
@@ -134,4 +134,3 @@ def run_render_loop(window, render_func):
         glfw.swap_buffers(window)
         glfw.poll_events()
     glfw.destroy_window(window)
-

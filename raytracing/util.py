@@ -50,3 +50,24 @@ def camera_ray(
         @ target_in_camera
     )
     return Ray(camera_pos, normalize(target_in_world[:3] - camera_pos))
+
+
+def partition(array, pivot, start, end, value_func=lambda value: value):
+    """
+    Reorder the array in range [start, end) into two parts and return a
+    partition position mid. The values in reordered part in [start, mid)
+    will be smaller than pivot, and the values in [mid, end) will be
+    large than or equal to the pivot.
+    """
+    i, j = start, end
+    while i < j:
+        while i < j and value_func(array[i]) < pivot:
+            i += 1
+        if i == j:
+            return i
+        while i < j and value_func(array[j - 1]) >= pivot:
+            j -= 1
+        if i == j:
+            return j
+        array[i], array[j - 1] = array[j - 1], array[i]
+    return i

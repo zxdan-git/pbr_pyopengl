@@ -1,0 +1,160 @@
+from OpenGL import GL as gl
+import glfw
+import raytracing.glutil as glutil
+import raytracing.transform as transform
+from raytracing.shape import Shape, Sphere, Cube, Triangle
+from raytracing.ray import Ray
+from raytracing.bounding_box import AABB
+from raytracing.bounding_volume_hierarchy import BVH
+import raytracing.util as util
+import numpy as np
+from typing import List
+from collections import deque
+import random
+
+camera_pos = np.array([10, 10, 10], dtype=np.float32)
+camera_target = np.array([0, 0, 0], dtype=np.float32)
+camera_up = np.array([0, 1, 0], dtype=np.float32)
+
+fov = 60
+near = 1.0
+far = 1000.0
+
+bvh_level = 0
+
+
+def setup_scene(window, program_id):
+    view_mat_loc = gl.glGetUniformLocation(program_id, "view")
+    view_mat = transform.world_to_camera(camera_pos, camera_target, camera_up)
+    gl.glUniformMatrix4fv(view_mat_loc, 1, True, view_mat)
+
+    projection_mat_loc = gl.glGetUniformLocation(program_id, "projection")
+    window_width, window_height = glfw.get_window_size(window)
+    projection_mat = transform.perspective(
+        fov, float(window_width) / window_height, near, far
+    )
+    gl.glUniformMatrix4fv(projection_mat_loc, 1, True, projection_mat)
+
+
+def paint_bounding_box(bbx: AABB, index_offset, model_mat_loc):
+    bbx_shape = Cube()
+    with glutil.create_index_buffer_object(bbx_shape.line_index + index_offset):
+        pos = bbx.center()
+        sx = 0.5 * bbx.range_x().size()
+        sy = 0.5 * bbx.range_y().size()
+        sz = 0.5 * bbx.range_z().size()
+        gl.glUniformMatrix4fv(
+            model_mat_loc,
+            1,
+            True,
+            transform.translate(pos[0], pos[1], pos[2]) @ transform.scale(sx, sy, sz),
+        )
+        gl.glDrawElements(
+            gl.GL_LINES, len(bbx_shape.line_index), gl.GL_UNSIGNED_INT, None
+        )
+
+
+def paint_bbx_in_bvh(bvh: BVH, index_offset, model_mat_loc):
+    global bvh_level
+    dq = deque([bvh.root])
+    current_level = 0
+    while len(dq):
+        node_num = len(dq)
+        for i in range(node_num):
+            node = dq.popleft()
+            if current_level == bvh_level:
+                paint_bounding_box(node.bbx, index_offset, model_mat_loc)
+            if node.left:
+                dq.append(node.left)
+            if node.right:
+                dq.append(node.right)
+        current_level += 1
+
+    if bvh_level == -1:
+        bvh_level = current_level - 1
+
+    if current_level == bvh_level:
+        bvh_level = 0
+
+
+def bounding_volume_hierarchy_test(program_id, shapes: List[Shape], bvh: BVH):
+    view_mat_loc = gl.glGetUniformLocation(program_id, "view")
+    view_mat = transform.world_to_camera(camera_pos, camera_target, camera_up)
+    gl.glUniformMatrix4fv(view_mat_loc, 1, True, view_mat)
+
+    model_mat_loc = gl.glGetUniformLocation(program_id, "model")
+    index_offset = 0
+
+    for shape in shapes:
+        with glutil.create_index_buffer_object(shape.face_index + index_offset):
+            gl.glUniformMatrix4fv(model_mat_loc, 1, True, shape.transform)
+            gl.glDrawElements(
+                gl.GL_TRIANGLES, len(shape.face_index), gl.GL_UNSIGNED_INT, None
+            )
+        index_offset += shape.vertex.shape[0]
+
+    paint_bbx_in_bvh(bvh, index_offset, model_mat_loc)
+
+
+def key_callback(window, key, scancode, action, mods):
+    global camera_pos, bvh_level
+    if action == glfw.REPEAT or action == glfw.PRESS:
+        if key == glfw.KEY_R:
+            dist = camera_pos - camera_target
+            t_dist = transform.rotate_Y(0.1) @ np.append(dist, 0)
+            camera_pos = camera_target + t_dist[:3]
+
+        if key == glfw.KEY_DOWN:
+            bvh_level += 1
+
+        if key == glfw.KEY_UP:
+            bvh_level -= 1
+
+
+if __name__ == "__main__":
+    shapes: List[Shape] = []
+    for _ in range(10):
+        sphere = Sphere(10, 20)
+        sphere.transform = transform.translate(
+            random.random() * 5, random.random() * 5, random.random() * 5
+        ) @ transform.scale(random.random(), random.random(), random.random())
+        shapes.append(sphere)
+
+    """
+    sphere = Sphere(10, 20)
+    sphere.transform = transform.translate(-1.5, 0, 5) @ transform.scale(0.5, 1.0, 1.0)
+    shapes.append(sphere)
+
+    sphere = Sphere(10, 20)
+    sphere.transform = transform.translate(2, 0, 7) @ transform.scale(1.0, 0.5, 1.0)
+    shapes.append(sphere)
+
+    sphere = Sphere(10, 20)
+    sphere.transform = transform.translate(-2, 0, 9) @ transform.scale(1.0, 1.0, 0.5)
+    shapes.append(sphere)
+    """
+
+    bbx = AABB()
+    for shape in shapes:
+        bbx = AABB.union(bbx, shape.bounding_box)
+    camera_target = bbx.center()
+
+    vertex = np.concatenate(
+        [shape.vertex for shape in shapes] + [Cube().vertex], axis=0
+    )
+
+    with glutil.create_main_window(1024, 768) as window:
+        glfw.set_key_callback(window, key_callback)
+        with glutil.load_shaders(
+            "shaders/bounding_volume_hierarchy.vertex",
+            "shaders/bounding_volume_hierarchy.fragment",
+        ) as program_id:
+            with glutil.create_vertex_array_object():
+                with glutil.create_vertex_buffer_object(vertex.flatten()):
+                    setup_scene(window, program_id)
+                    glutil.run_render_loop(
+                        window,
+                        lambda: bounding_volume_hierarchy_test(
+                            program_id, shapes, BVH(shapes)
+                        ),
+                    )

@@ -80,7 +80,9 @@ class AABB(RayIntersectObject):
         time_inv = Interval(-1, ray.t_max)
         for i in range(3):
             inv_i = self.get_range(i).to_array()
-            time_range = (inv_i - ray.pos[i]) / ray.dir[i]
+            if np.isclose(ray.dir[i], 0):
+                continue
+            time_range = (inv_i - ray.pos[i]) / np.float32(ray.dir[i])
             time_inv = Interval.intersect(
                 time_inv, Interval(np.min(time_range), np.max(time_range))
             )

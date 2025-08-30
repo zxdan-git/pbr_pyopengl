@@ -5,6 +5,7 @@ import raytracing.transform as transform
 from raytracing.shape import Shape, Sphere, Cube, Triangle
 from raytracing.ray import Ray
 import raytracing.util as util
+from raytracing.camera_util import camera_ray
 import numpy as np
 
 rotate_angle = 0.01
@@ -65,7 +66,7 @@ def ray_shape_intersect_test(window, program_id, shapes):
 
     window_width, window_height = glfw.get_window_size(window)
     mouse_x, mouse_y = glfw.get_cursor_pos(window)
-    ray = util.camera_ray(
+    ray = camera_ray(
         mouse_x,
         mouse_y,
         camera_pos,

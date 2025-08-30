@@ -1,6 +1,6 @@
 import numpy as np
-from raytracing.interval import Interval
-from raytracing.ray import Ray, RayIntersectObject
+from .interval import Interval
+from .ray import Ray, RayIntersectObject
 
 
 class AABB(RayIntersectObject):
@@ -76,6 +76,13 @@ class AABB(RayIntersectObject):
     def empty(self):
         return self.__inv_x.empty() or self.__inv_y.empty() or self.__inv_z.empty()
 
+    def surface_area(self):
+        len_x = self.__inv_x.size()
+        len_y = self.__inv_y.size()
+        len_z = self.__inv_z.size()
+
+        return 2 * (len_x * len_y + len_x * len_z + len_y * len_z)
+
     def ray_intersect(self, ray: Ray):
         time_inv = Interval(-1, ray.t_max)
         for i in range(3):
@@ -93,3 +100,6 @@ class AABB(RayIntersectObject):
         elif time_inv.upper < ray.t_max:
             return time_inv.upper
         return None
+
+    def ray_intersect_cost(self):
+        return 0

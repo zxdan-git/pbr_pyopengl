@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 import numpy as np
-from raytracing.ray import Ray, RayIntersectObject
-from raytracing.bounding_box import AABB
-import raytracing.util as util
+from .ray import Ray, RayIntersectObject
+from .bounding_box import AABB
+from .util import det3x3
 from enum import IntFlag
 
 
@@ -53,14 +53,15 @@ class Shape(RayIntersectObject):
         return self._bbx.center()
 
     def ray_intersect(self, ray: Ray):
-        """
-        Intersection of a shape would update the t_max of ray.
-        """
+        # Intersection of a shape would update the t_max of ray.
         intersect = self._ray_intersect(ray)
         if intersect is None or intersect > ray.t_max:
             return None
         ray.t_max = intersect
         return intersect
+
+    def ray_intersect_cost(self):
+        return 1
 
     def _update_bounding_box(self):
         self._bbx = AABB()
@@ -301,21 +302,17 @@ class Triangle(Shape):
         v0, v1, v2 = self._vertex
         cofficient = np.array([v1 - v0, v2 - v0, -t_ray.dir], dtype=np.float32)
         b = t_ray.pos - v0
-        det = util.det3x3(cofficient)
+        det = det3x3(cofficient)
         if np.isclose(det, 0):
             return None
 
         inv_det = 1 / det
 
-        alpha = (
-            util.det3x3(np.array([b, v2 - v0, -t_ray.dir], dtype=np.float32)) * inv_det
-        )
+        alpha = det3x3(np.array([b, v2 - v0, -t_ray.dir], dtype=np.float32)) * inv_det
         if alpha < 0 or alpha > 1:
             return None
 
-        beta = (
-            util.det3x3(np.array([v1 - v0, b, -t_ray.dir], dtype=np.float32)) * inv_det
-        )
+        beta = det3x3(np.array([v1 - v0, b, -t_ray.dir], dtype=np.float32)) * inv_det
         if beta < 0 or beta > 1:
             return None
 
@@ -323,7 +320,7 @@ class Triangle(Shape):
         if gamma < 0 or gamma > 1:
             return None
 
-        t = util.det3x3(np.array([v1 - v0, v2 - v0, b], dtype=np.float32)) * inv_det
+        t = det3x3(np.array([v1 - v0, v2 - v0, b], dtype=np.float32)) * inv_det
         if t < 0:
             return None
         return t

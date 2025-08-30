@@ -2,11 +2,10 @@ from OpenGL import GL as gl
 import glfw
 import raytracing.glutil as glutil
 import raytracing.transform as transform
-from raytracing.shape import Shape, Sphere, Cube, Triangle
+from raytracing.shape import Shape, Sphere, Cube
 from raytracing.ray import Ray
 from raytracing.bounding_box import AABB
 from raytracing.bounding_volume_hierarchy import BVH
-import raytracing.util as util
 import numpy as np
 from typing import List
 from collections import deque
@@ -20,7 +19,13 @@ fov = 60
 near = 1.0
 far = 1000.0
 
+shapes: List[Shape] = []
+
 bvh_level = 0
+bvh_types = [BVH.Type.MID_POINT, BVH.Type.EQUAL_COUNT, BVH.Type.SAH]
+bvh_type_names = ["MID POINT", "EQUAL_COUNT", "SAH"]
+bvh_type_id = 0
+bvh: BVH = None
 
 
 def setup_scene(window, program_id):
@@ -54,7 +59,7 @@ def paint_bounding_box(bbx: AABB, index_offset, model_mat_loc):
         )
 
 
-def paint_bbx_in_bvh(bvh: BVH, index_offset, model_mat_loc):
+def paint_bbx_in_bvh(index_offset, model_mat_loc):
     global bvh_level
     dq = deque([bvh.root])
     current_level = 0
@@ -77,7 +82,7 @@ def paint_bbx_in_bvh(bvh: BVH, index_offset, model_mat_loc):
         bvh_level = 0
 
 
-def bounding_volume_hierarchy_test(program_id, shapes: List[Shape], bvh: BVH):
+def bounding_volume_hierarchy_test(program_id, shapes: List[Shape]):
     view_mat_loc = gl.glGetUniformLocation(program_id, "view")
     view_mat = transform.world_to_camera(camera_pos, camera_target, camera_up)
     gl.glUniformMatrix4fv(view_mat_loc, 1, True, view_mat)
@@ -93,11 +98,20 @@ def bounding_volume_hierarchy_test(program_id, shapes: List[Shape], bvh: BVH):
             )
         index_offset += shape.vertex.shape[0]
 
-    paint_bbx_in_bvh(bvh, index_offset, model_mat_loc)
+    paint_bbx_in_bvh(index_offset, model_mat_loc)
+
+
+def generate_bvh():
+    global bvh, bvh_level
+    bvh = BVH(bvh_types[bvh_type_id], shapes)
+    bvh_level = 0
+    print(
+        "Generated", bvh_type_names[bvh_type_id], "with cost", bvh.ray_intersect_cost()
+    )
 
 
 def key_callback(window, key, scancode, action, mods):
-    global camera_pos, bvh_level
+    global camera_pos, bvh_level, bvh_type_id
     if action == glfw.REPEAT or action == glfw.PRESS:
         if key == glfw.KEY_R:
             dist = camera_pos - camera_target
@@ -110,29 +124,23 @@ def key_callback(window, key, scancode, action, mods):
         if key == glfw.KEY_UP:
             bvh_level -= 1
 
+        n_types = len(bvh_types)
+        if key == glfw.KEY_LEFT:
+            bvh_type_id = (n_types + bvh_type_id - 1) % n_types
+            generate_bvh()
+
+        if key == glfw.KEY_RIGHT:
+            bvh_type_id = (n_types + bvh_type_id + 1) % n_types
+            generate_bvh()
+
 
 if __name__ == "__main__":
-    shapes: List[Shape] = []
     for _ in range(10):
         sphere = Sphere(10, 20)
         sphere.transform = transform.translate(
             random.random() * 5, random.random() * 5, random.random() * 5
         ) @ transform.scale(random.random(), random.random(), random.random())
         shapes.append(sphere)
-
-    """
-    sphere = Sphere(10, 20)
-    sphere.transform = transform.translate(-1.5, 0, 5) @ transform.scale(0.5, 1.0, 1.0)
-    shapes.append(sphere)
-
-    sphere = Sphere(10, 20)
-    sphere.transform = transform.translate(2, 0, 7) @ transform.scale(1.0, 0.5, 1.0)
-    shapes.append(sphere)
-
-    sphere = Sphere(10, 20)
-    sphere.transform = transform.translate(-2, 0, 9) @ transform.scale(1.0, 1.0, 0.5)
-    shapes.append(sphere)
-    """
 
     bbx = AABB()
     for shape in shapes:
@@ -142,6 +150,8 @@ if __name__ == "__main__":
     vertex = np.concatenate(
         [shape.vertex for shape in shapes] + [Cube().vertex], axis=0
     )
+
+    generate_bvh()
 
     with glutil.create_main_window(1024, 768) as window:
         glfw.set_key_callback(window, key_callback)
@@ -154,7 +164,5 @@ if __name__ == "__main__":
                     setup_scene(window, program_id)
                     glutil.run_render_loop(
                         window,
-                        lambda: bounding_volume_hierarchy_test(
-                            program_id, shapes, BVH(shapes)
-                        ),
+                        lambda: bounding_volume_hierarchy_test(program_id, shapes),
                     )

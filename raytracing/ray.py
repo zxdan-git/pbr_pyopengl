@@ -25,3 +25,7 @@ class RayIntersectObject(ABC):
     @abstractmethod
     def ray_intersect(self, ray: Ray):
         pass
+
+    @abstractmethod
+    def ray_intersect_cost(self):
+        pass

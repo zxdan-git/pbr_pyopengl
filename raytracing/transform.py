@@ -1,5 +1,5 @@
 import numpy as np
-from raytracing.util import normalize
+from .util import normalize
 
 
 def world_to_camera(pos, look_at, up):

@@ -6,6 +6,7 @@ from raytracing.shape import Shape, Sphere, Cube, Triangle
 from raytracing.ray import Ray
 from raytracing.bounding_box import AABB
 import raytracing.util as util
+from raytracing.camera_util import camera_ray
 import numpy as np
 from typing import List
 
@@ -34,7 +35,7 @@ def setup_scene(window, program_id):
 def multiple_shapes_intersection_test(window, program_id, shapes: List[Shape]):
     window_width, window_height = glfw.get_window_size(window)
     mouse_x, mouse_y = glfw.get_cursor_pos(window)
-    camera_ray = util.camera_ray(
+    view_ray = camera_ray(
         mouse_x,
         mouse_y,
         camera_pos,
@@ -45,7 +46,7 @@ def multiple_shapes_intersection_test(window, program_id, shapes: List[Shape]):
         window_height,
     )
 
-    intersect_to_XZ = camera_ray.at(-camera_ray.pos[1] / camera_ray.dir[1])
+    intersect_to_XZ = view_ray.at(-view_ray.pos[1] / view_ray.dir[1])
     ray = Ray(np.zeros(3, dtype=np.float32), util.normalize(intersect_to_XZ))
     ray.t_max = np.linalg.norm(intersect_to_XZ)
 

@@ -1,7 +1,8 @@
-from .transform import camera_to_world
-from .ray import Ray
-from .util import normalize
 import numpy as np
+
+from .ray import Ray
+from .transform import camera_to_world
+from .util import normalize
 
 
 def camera_ray(

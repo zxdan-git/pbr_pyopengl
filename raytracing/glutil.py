@@ -1,8 +1,8 @@
 import contextlib, sys
-from OpenGL import GL as gl
+import ctypes
 import glfw
 import logging
-import ctypes
+from OpenGL import GL as gl
 
 
 @contextlib.contextmanager

@@ -74,3 +74,26 @@ def nth_element(array, n, start, end, value_func=lambda value: value):
     if pos > start + n:
         return nth_element(array, n, start, pos, value_func)
     return pos
+
+
+def radix_sort_binary(
+    array, total_bits, bits_per_pass, start, end, value_func=lambda value: value
+):
+    n_pass = int(np.ceil(total_bits / bits_per_pass))
+    n_buckets = int(np.power(2, bits_per_pass))
+    mask = (1 << bits_per_pass) - 1
+    for pass_i in range(n_pass):
+        bucket_sizes = [0] * n_buckets
+        values = [value_func(array[i]) for i in range(start, end)]
+        for value in values:
+            bucket_sizes[(value >> (pass_i * bits_per_pass)) & mask] += 1
+
+        bucket_start = [start] * n_buckets
+        for i in range(1, n_buckets):
+            bucket_start[i] = bucket_start[i - 1] + bucket_sizes[i - 1]
+
+        array_copy = [array[i] for i in range(start, end)]
+        for idx, value in enumerate(values):
+            bucket_id = (value >> (pass_i * bits_per_pass)) & mask
+            array[bucket_start[bucket_id]] = array_copy[idx]
+            bucket_start[bucket_id] += 1

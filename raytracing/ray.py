@@ -1,5 +1,4 @@
 import numpy as np
-from abc import ABC, abstractmethod
 
 
 class Ray:
@@ -19,13 +18,3 @@ class Ray:
 
     def reset_t_max(self):
         self.t_max = np.inf
-
-
-class RayIntersectObject(ABC):
-    @abstractmethod
-    def ray_intersect(self, ray: Ray):
-        pass
-
-    @abstractmethod
-    def ray_intersect_cost(self):
-        pass

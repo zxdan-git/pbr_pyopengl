@@ -6,9 +6,9 @@ from raytracing.shape import Shape, Sphere, Cube
 from raytracing.ray import Ray
 from raytracing.bounding_box import AABB
 from raytracing.bounding_volume_hierarchy import BVH
+from raytracing.bvh_util.build_node import BuildNode
 import numpy as np
 from typing import List
-from collections import deque
 import random
 
 camera_pos = np.array([10, 10, 10], dtype=np.float32)
@@ -22,10 +22,16 @@ far = 1000.0
 shapes: List[Shape] = []
 
 bvh_level = 0
-bvh_types = [BVH.Type.MID_POINT, BVH.Type.EQUAL_COUNT, BVH.Type.SAH]
-bvh_type_names = ["MID POINT", "EQUAL_COUNT", "SAH"]
+bvh_types = [
+    BVH.Type.MID_POINT,
+    BVH.Type.EQUAL_COUNT,
+    BVH.Type.SAH,
+    BVH.Type.MORTON_CODE,
+]
+bvh_type_names = ["MID POINT", "EQUAL_COUNT", "SAH", "MORTON_CODE"]
 bvh_type_id = 0
 bvh: BVH = None
+bvh_nodes: List[List[BuildNode]] = []
 
 
 def setup_scene(window, program_id):
@@ -60,26 +66,8 @@ def paint_bounding_box(bbx: AABB, index_offset, model_mat_loc):
 
 
 def paint_bbx_in_bvh(index_offset, model_mat_loc):
-    global bvh_level
-    dq = deque([bvh.root])
-    current_level = 0
-    while len(dq):
-        node_num = len(dq)
-        for i in range(node_num):
-            node = dq.popleft()
-            if current_level == bvh_level:
-                paint_bounding_box(node.bbx, index_offset, model_mat_loc)
-            if node.left:
-                dq.append(node.left)
-            if node.right:
-                dq.append(node.right)
-        current_level += 1
-
-    if bvh_level == -1:
-        bvh_level = current_level - 1
-
-    if current_level == bvh_level:
-        bvh_level = 0
+    for node in bvh_nodes[bvh_level]:
+        paint_bounding_box(node.bbx, index_offset, model_mat_loc)
 
 
 def bounding_volume_hierarchy_test(program_id, shapes: List[Shape]):
@@ -102,12 +90,27 @@ def bounding_volume_hierarchy_test(program_id, shapes: List[Shape]):
 
 
 def generate_bvh():
-    global bvh, bvh_level
+    global bvh, bvh_level, bvh_nodes
     bvh = BVH(bvh_types[bvh_type_id], shapes)
     bvh_level = 0
+    bvh_nodes = [[bvh.root]]
     print(
         "Generated", bvh_type_names[bvh_type_id], "with cost", bvh.ray_intersect_cost()
     )
+    while True:
+        children: List[BuildNode] = []
+        for parent in bvh_nodes[-1]:
+            if parent.left:
+                children.append(parent.left)
+            if parent.right:
+                children.append(parent.right)
+            for object in parent.objects:
+                if isinstance(object, BuildNode):
+                    children.append(object)
+        if len(children):
+            bvh_nodes.append(children)
+        else:
+            break
 
 
 def key_callback(window, key, scancode, action, mods):
@@ -120,9 +123,13 @@ def key_callback(window, key, scancode, action, mods):
 
         if key == glfw.KEY_DOWN:
             bvh_level += 1
+            if bvh_level == len(bvh_nodes):
+                bvh_level = 0
 
         if key == glfw.KEY_UP:
             bvh_level -= 1
+            if bvh_level == -1:
+                bvh_level = len(bvh_nodes) - 1
 
         n_types = len(bvh_types)
         if key == glfw.KEY_LEFT:

@@ -1,9 +1,10 @@
 import numpy as np
+
 from .interval import Interval
-from .ray import Ray, RayIntersectObject
+from .ray import Ray
 
 
-class AABB(RayIntersectObject):
+class AABB:
     def __init__(
         self,
         x_min=np.inf,
@@ -83,6 +84,16 @@ class AABB(RayIntersectObject):
 
         return 2 * (len_x * len_y + len_x * len_z + len_y * len_z)
 
+    def offset(self, pos):
+        return np.array(
+            [
+                (pos[0] - self.__inv_x.lower) / self.__inv_x.size(),
+                (pos[1] - self.__inv_y.lower) / self.__inv_y.size(),
+                (pos[2] - self.__inv_z.lower) / self.__inv_z.size(),
+            ],
+            dtype=np.float32,
+        )
+
     def ray_intersect(self, ray: Ray):
         time_inv = Interval(-1, ray.t_max)
         for i in range(3):
@@ -100,6 +111,3 @@ class AABB(RayIntersectObject):
         elif time_inv.upper < ray.t_max:
             return time_inv.upper
         return None
-
-    def ray_intersect_cost(self):
-        return 0

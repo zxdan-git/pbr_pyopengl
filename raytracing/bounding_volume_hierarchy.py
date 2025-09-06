@@ -1,9 +1,18 @@
 import numpy as np
+
 from .bounding_box import AABB
-from .shape import Shape
-from .util import partition, partition_cmp, nth_element
-from .ray import Ray, RayIntersectObject
-from typing import List
+from .bvh_util.build_node import BuildNode
+from .bvh_util.partition_util import (
+    mid_point_partition_on_target_axis,
+    equal_partition_on_target_axis,
+    sah_partition_on_target_aixs,
+)
+from .bvh_util.recursive_build import build_by_axis_spread
+from .bvh_util.hybrid_build import build_with_morton_code
+from .interval import Interval
+from .ray import Ray
+from .ray_intersect_object import RayIntersectObject
+from typing import List, Callable
 from enum import Enum
 
 
@@ -14,52 +23,14 @@ class BVH(RayIntersectObject):
         SAH = 3
         MORTON_CODE = 4
 
-    class Node(RayIntersectObject):
-        def __init__(self):
-            self.left: BVH.Node = None
-            self.right: BVH.Node = None
-            self.bbx = AABB()
-            self.shapes: List[Shape] = []
-
-        def ray_intersect(self, ray: Ray):
-            if not self.bbx.ray_intersect(ray):
-                return None
-
-            if len(self.shapes):
-                intersect = False
-                for shape in self.shapes:
-                    if not shape.ray_intersect(ray) is None:
-                        intersect = True
-
-                # Note: we should return ray.t_max to get the nearest
-                # intersection.
-                if intersect:
-                    return ray.t_max
-                else:
-                    return None
-
-            for child in [self.left, self.right]:
-                if not child is None:
-                    intersect = child.ray_intersect(ray)
-                    if not intersect is None:
-                        return intersect
-            return None
-
-        def ray_intersect_cost(self):
-            if len(self.shapes) == 0:
-                return 0.125
-            return np.sum([shape.ray_intersect_cost() for shape in self.shapes])
-
-    def __init__(self, type, shapes):
+    def __init__(self, type, objects):
         self.__type: BVH.Type = type
-        self.__shapes: List[Shape] = shapes
-        self.__root: BVH.Node = None
+        self.__objects: List[RayIntersectObject] = objects
+        self.__root: BuildNode = None
         if type == BVH.Type.MORTON_CODE:
-            self.__root = self.__linear_build()
+            self.__root = build_with_morton_code(self.__objects)
         else:
-            self.__root = self.__recursive_build(0, len(shapes), self.__type)
-
-        self.__cost = self.__ray_intersect_cost()
+            self.__root = self._recursive_build()
 
     @property
     def root(self):
@@ -69,188 +40,33 @@ class BVH(RayIntersectObject):
     def type(self):
         return self.__type
 
+    @property
+    def bounding_box(self) -> AABB:
+        if self.__root is None:
+            return AABB()
+        return self.__root.bounding_box
+
     def ray_intersect(self, ray: Ray):
         return self.__root.ray_intersect(ray)
 
     def ray_intersect_cost(self):
-        return self.__cost
+        if self.__root is None:
+            return 0
+        return self.__root.ray_intersect_cost()
 
-    def __linear_build(self):
-        pass
+    def _recursive_build(self):
+        partition_func: Callable[
+            [List[RayIntersectObject], int, int, int, Interval], int
+        ] = None
+        if self.type == BVH.Type.MID_POINT:
+            partition_func = mid_point_partition_on_target_axis
+        elif self.type == BVH.Type.EQUAL_COUNT:
+            partition_func = equal_partition_on_target_axis
+        elif self.type == BVH.Type.SAH:
+            partition_func = sah_partition_on_target_aixs
+        else:
+            raise ValueError("Invalid BVH type for recursive building.")
 
-    def __recursive_build(self, start, end, type):
-        node = BVH.Node()
-        if end <= start:
-            return None
-
-        # Build bounding box for the node.
-        for shape in self.__shapes[start:end]:
-            node.bbx = AABB.union(node.bbx, shape.bounding_box)
-
-        # If there is only one object, directly create a leaf node.
-        if end - start == 1:
-            node.shapes.append(self.__shapes[start])
-            return node
-
-        # Find the axis along which the object centroids are most widely
-        # distributed to perform partition.
-        centroid_bbx = AABB()
-        for i in range(start, end):
-            centroid_bbx.embrace(self.__shapes[i].centroid())
-
-        target_axis = centroid_bbx.get_max_axis()
-        target_range = centroid_bbx.get_range(target_axis)
-
-        # If all objects have the same centroid, stop partition and save them
-        # in one leaf node. Otherwise the parition will not end.
-        if np.isclose(target_range.lower, target_range.upper):
-            for shape in self.__shapes[start:end]:
-                node.shapes.append(shape)
-            return node
-
-        # Do partition according to the type BVH type.
-        mid = (start + end) // 2
-        if type == BVH.Type.MID_POINT:
-            pivot = target_range.to_array().mean()
-            mid = partition_cmp(
-                self.__shapes,
-                pivot,
-                start,
-                end,
-                lambda shape: shape.centroid()[target_axis],
-            )
-        elif type == BVH.Type.EQUAL_COUNT:
-            mid = nth_element(
-                self.__shapes,
-                (end - start) // 2,
-                start,
-                end,
-                lambda shape: shape.centroid()[target_axis],
-            )
-        elif type == BVH.Type.SAH:
-            right_group_idx = self.__surface_area_heuristic(
-                start, end, target_range, target_axis
-            )
-
-            # If get an empty right group, directly save all objects in a
-            # leaf node.
-            if len(right_group_idx) == 0:
-                for shape in self.__shapes[start:end]:
-                    node.shapes.append(shape)
-                return node
-
-            # Otherwise, make a partition according to the groups generated by
-            # SAH.
-            right_group = [self.__shapes[idx] for idx in right_group_idx]
-            mid = partition(
-                self.__shapes,
-                start,
-                end,
-                lambda shape: not shape in right_group,
-            )
-        node.left = self.__recursive_build(start, mid, type)
-        node.right = self.__recursive_build(mid, end, type)
-        return node
-
-    def __surface_area_heuristic(
-        self, start, end, target_range, target_axis
-    ) -> List[int]:
-        # Build up buckets according to the centroid position on target axis.
-        class BucketInfo:
-            def __init__(self):
-                self.shape_idx: List[int] = []
-                self.total_cost = 0
-                self.bbx = AABB()
-
-        n_bucket = 12
-        buckets: List[BucketInfo] = [BucketInfo() for _ in range(n_bucket + 1)]
-        bbx = AABB()
-        for i in range(start, end):
-            shape = self.__shapes[i]
-            idx = int(
-                np.clip(
-                    n_bucket
-                    * (shape.bounding_box.center()[target_axis] - target_range.lower)
-                    / target_range.size(),
-                    0,
-                    n_bucket,
-                )
-            )
-            buckets[idx].shape_idx.append(i)
-            buckets[idx].total_cost += shape.ray_intersect_cost()
-            buckets[idx].bbx = AABB.union(buckets[idx].bbx, shape.bounding_box)
-            bbx = AABB.union(bbx, shape.bounding_box)
-
-        # Get all partition cases.
-        left_groups = [BucketInfo() for _ in range(n_bucket)]
-        right_groups = [BucketInfo() for _ in range(n_bucket)]
-        left_groups[0] = buckets[0]
-        right_groups[n_bucket - 1] = buckets[n_bucket]
-        for i in range(1, n_bucket):
-            left_groups[i].shape_idx = (
-                buckets[i].shape_idx + left_groups[i - 1].shape_idx
-            )
-            left_groups[i].total_cost = (
-                buckets[i].total_cost + left_groups[i - 1].total_cost
-            )
-            left_groups[i].bbx = AABB.union(buckets[i].bbx, left_groups[i - 1].bbx)
-
-            right_groups[n_bucket - i - 1].shape_idx = (
-                buckets[n_bucket - i].shape_idx + right_groups[n_bucket - i].shape_idx
-            )
-            right_groups[n_bucket - i - 1].total_cost = (
-                buckets[n_bucket - i].total_cost + right_groups[n_bucket - i].total_cost
-            )
-            right_groups[n_bucket - i - 1].bbx = AABB.union(
-                buckets[n_bucket - i].bbx, right_groups[n_bucket - i].bbx
-            )
-
-        # Find the partition with the lowest cost.
-        # cost = traversal cost + p_left * cost_left + p_right * cost_right.
-        # Here, traversal cost = 1/8, p_left = left bbx area / total bbx area,
-        # p_right = right bbx area / total bbx area
-        #
-        # Initially, the cost is the case when the left group has all shapes and
-        # the right group is empty.
-        min_cost = np.sum(
-            [shape.ray_intersect_cost() for shape in self.__shapes[start:end]]
+        return build_by_axis_spread(
+            self.__objects, 0, len(self.__objects), partition_func
         )
-        right_group_idx = []
-
-        inv_total_area = 1 / bbx.surface_area()
-        for left_group, right_group in zip(left_groups, right_groups):
-            cost = 0.125 + inv_total_area * (
-                left_group.bbx.surface_area() * left_group.total_cost
-                + right_group.bbx.surface_area() * right_group.total_cost
-            )
-
-            if cost < min_cost:
-                min_cost = cost
-                right_group_idx = right_group.shape_idx
-        return right_group_idx
-
-    def __ray_intersect_cost(self):
-        stack: List[BVH.Node] = []
-        node: BVH.Node = self.__root
-        last_visited: BVH.Node = None
-        prob = 1.0
-        cost = 0
-        while len(stack) or not node is None:
-            if not node is None:
-                stack.append(node)
-                if node.left:
-                    prob *= node.left.bbx.surface_area() / node.bbx.surface_area()
-                node = node.left
-            else:
-                node = stack[-1]
-                if node.right and node.right != last_visited:
-                    prob *= node.right.bbx.surface_area() / node.bbx.surface_area()
-                    node = node.right
-                else:
-                    cost += prob * node.ray_intersect_cost()
-                    stack.pop()
-                    if len(stack):
-                        prob /= node.bbx.surface_area() / stack[-1].bbx.surface_area()
-                    last_visited = node
-                    node = None
-        return cost

@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
-import numpy as np
-from .ray import Ray, RayIntersectObject
-from .bounding_box import AABB
-from .util import det3x3
 from enum import IntFlag
+import numpy as np
+
+from .bounding_box import AABB
+from .ray import Ray
+from .ray_intersect_object import RayIntersectObject
+from .util import det3x3
 
 
 class Shape(RayIntersectObject):
@@ -49,9 +51,6 @@ class Shape(RayIntersectObject):
     def bounding_box(self):
         return self._bbx
 
-    def centroid(self):
-        return self._bbx.center()
-
     def ray_intersect(self, ray: Ray):
         # Intersection of a shape would update the t_max of ray.
         intersect = self._ray_intersect(ray)
@@ -77,9 +76,9 @@ class Shape(RayIntersectObject):
 class Sphere(Shape):
     def __init__(self, nu, nv):
         super().__init__()
-        self.__generate_vertex(nu, nv)
-        self.__generate_face_index(nu, nv)
-        self.__generate_line_index(nu, nv)
+        self._generate_vertex(nu, nv)
+        self._generate_face_index(nu, nv)
+        self._generate_line_index(nu, nv)
         self._bbx = AABB(-1, 1, -1, 1, -1, 1)
 
     def _ray_intersect(self, ray: Ray):
@@ -107,7 +106,7 @@ class Sphere(Shape):
         t_2 = (-term_b - np.sqrt(discriminant)) / (2 * term_a)
         return np.min([t_1, t_2])
 
-    def __generate_vertex(self, nu, nv):
+    def _generate_vertex(self, nu, nv):
         vertex = []
         for i in range(nu + 1):
             theta = np.pi * float(i) / nu
@@ -120,7 +119,7 @@ class Sphere(Shape):
                 )
         self._vertex = np.array(vertex)
 
-    def __generate_face_index(self, nu, nv):
+    def _generate_face_index(self, nu, nv):
         index = []
         n_col = nv + 1
         for i in range(nu):
@@ -135,7 +134,7 @@ class Sphere(Shape):
                 ]
         self._face_index = np.array(index, dtype=np.uint32)
 
-    def __generate_line_index(self, nu, nv):
+    def _generate_line_index(self, nu, nv):
         index = []
         n_col = nv + 1
         for i in range(nu):

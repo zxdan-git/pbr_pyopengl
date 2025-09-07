@@ -39,7 +39,7 @@ def setup_scene(window, program_id):
 def paint_bounding_box(shape, index_offset, model_mat_loc):
     bbx = Cube()
     with glutil.create_index_buffer_object(bbx.line_index + index_offset):
-        pos = shape.centroid()
+        pos = shape.bounding_box.center()
         shape_bbx = shape.bounding_box
         sx = 0.5 * shape_bbx.range_x().size()
         sy = 0.5 * shape_bbx.range_y().size()
@@ -53,8 +53,16 @@ def paint_bounding_box(shape, index_offset, model_mat_loc):
         gl.glDrawElements(gl.GL_LINES, len(bbx.line_index), gl.GL_UNSIGNED_INT, None)
 
 
-def ray_shape_intersect_test(window, program_id, shapes):
+def ray_shape_intersect_test(window, program_id, shapes, text_render):
     global shape_idx
+
+    glutil.show_text(
+        text_renderer,
+        "DOWN: next shape",
+        "UP: last shape",
+        "SPACE: show/hide bounding box",
+    )
+
     n_shapes = len(shapes)
     if not 0 <= shape_idx < n_shapes:
         shape_idx = (shape_idx + n_shapes) % n_shapes
@@ -149,14 +157,18 @@ if __name__ == "__main__":
 
     vertex = np.concatenate([shape.vertex for shape in shapes] + [bbx.vertex], axis=0)
     with glutil.create_main_window(1024, 768) as window:
-        glfw.set_key_callback(window, key_callback)
-        with glutil.load_shaders(
-            "shaders/ray_shape_intersect.vertex", "shaders/ray_shape_intersect.fragment"
-        ) as program_id:
-            with glutil.create_vertex_array_object():
-                with glutil.create_vertex_buffer_object(vertex.flatten()):
-                    setup_scene(window, program_id)
-                    glutil.run_render_loop(
-                        window,
-                        lambda: ray_shape_intersect_test(window, program_id, shapes),
-                    )
+        with glutil.create_text_renderer(window) as text_renderer:
+            glfw.set_key_callback(window, key_callback)
+            with glutil.load_shaders(
+                "shaders/ray_shape_intersect.vertex",
+                "shaders/ray_shape_intersect.fragment",
+            ) as program_id:
+                with glutil.create_vertex_array_object():
+                    with glutil.create_vertex_buffer_object(vertex.flatten()):
+                        setup_scene(window, program_id)
+                        glutil.run_render_loop(
+                            window,
+                            lambda: ray_shape_intersect_test(
+                                window, program_id, shapes, text_renderer
+                            ),
+                        )

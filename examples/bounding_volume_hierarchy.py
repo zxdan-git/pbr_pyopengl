@@ -32,6 +32,7 @@ bvh_type_names = ["MID POINT", "EQUAL_COUNT", "SAH", "MORTON_CODE"]
 bvh_type_id = 0
 bvh: BVH = None
 bvh_nodes: List[List[BuildNode]] = []
+bvh_cost = 0
 
 
 def setup_scene(window, program_id):
@@ -70,7 +71,20 @@ def paint_bbx_in_bvh(index_offset, model_mat_loc):
         paint_bounding_box(node.bbx, index_offset, model_mat_loc)
 
 
-def bounding_volume_hierarchy_test(program_id, shapes: List[Shape]):
+def bounding_volume_hierarchy_test(program_id, shapes: List[Shape], text_renderer):
+    glutil.show_text(
+        text_renderer,
+        "UP: last BVH type",
+        "DOWN: next BVH type",
+        "LEFT: last BVH level",
+        "RIGHT: next BVH level",
+        "R: rotate the camera",
+        "",
+        "Current BVH INFO:",
+        "   Name: %s" % bvh_type_names[bvh_type_id],
+        "   Current Level: %d" % bvh_level,
+        "   SAH: %f" % bvh_cost,
+    )
     view_mat_loc = gl.glGetUniformLocation(program_id, "view")
     view_mat = transform.world_to_camera(camera_pos, camera_target, camera_up)
     gl.glUniformMatrix4fv(view_mat_loc, 1, True, view_mat)
@@ -90,13 +104,12 @@ def bounding_volume_hierarchy_test(program_id, shapes: List[Shape]):
 
 
 def generate_bvh():
-    global bvh, bvh_level, bvh_nodes
+    global bvh, bvh_level, bvh_nodes, bvh_cost
     bvh = BVH(bvh_types[bvh_type_id], shapes)
     bvh_level = 0
     bvh_nodes = [[bvh.root]]
-    print(
-        "Generated", bvh_type_names[bvh_type_id], "with cost", bvh.ray_intersect_cost()
-    )
+    bvh_cost = bvh.ray_intersect_cost()
+    print("Generated", bvh_type_names[bvh_type_id], "with cost", bvh_cost)
     while True:
         children: List[BuildNode] = []
         for parent in bvh_nodes[-1]:
@@ -161,15 +174,18 @@ if __name__ == "__main__":
     generate_bvh()
 
     with glutil.create_main_window(1024, 768) as window:
-        glfw.set_key_callback(window, key_callback)
-        with glutil.load_shaders(
-            "shaders/bounding_volume_hierarchy.vertex",
-            "shaders/bounding_volume_hierarchy.fragment",
-        ) as program_id:
-            with glutil.create_vertex_array_object():
-                with glutil.create_vertex_buffer_object(vertex.flatten()):
-                    setup_scene(window, program_id)
-                    glutil.run_render_loop(
-                        window,
-                        lambda: bounding_volume_hierarchy_test(program_id, shapes),
-                    )
+        with glutil.create_text_renderer(window) as text_renderer:
+            glfw.set_key_callback(window, key_callback)
+            with glutil.load_shaders(
+                "shaders/bounding_volume_hierarchy.vertex",
+                "shaders/bounding_volume_hierarchy.fragment",
+            ) as program_id:
+                with glutil.create_vertex_array_object():
+                    with glutil.create_vertex_buffer_object(vertex.flatten()):
+                        setup_scene(window, program_id)
+                        glutil.run_render_loop(
+                            window,
+                            lambda: bounding_volume_hierarchy_test(
+                                program_id, shapes, text_renderer
+                            ),
+                        )

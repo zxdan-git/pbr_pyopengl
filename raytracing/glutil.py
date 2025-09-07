@@ -1,6 +1,8 @@
 import contextlib, sys
 import ctypes
 import glfw
+import imgui
+from imgui.integrations.glfw import GlfwRenderer
 import logging
 from OpenGL import GL as gl
 
@@ -32,6 +34,35 @@ def create_main_window(width, height, title=__name__):
         yield window
     finally:
         glfw.terminate()
+
+
+@contextlib.contextmanager
+def create_text_renderer(window):
+    try:
+        imgui.create_context()
+        text_renderer = GlfwRenderer(window)
+        yield text_renderer
+    finally:
+        text_renderer.shutdown()
+
+
+def show_text(text_renderer: GlfwRenderer, *texts):
+    text_renderer.process_inputs()
+    imgui.new_frame()
+
+    imgui.begin(
+        "HiddenTitle",
+        flags=imgui.WINDOW_NO_TITLE_BAR
+        | imgui.WINDOW_ALWAYS_AUTO_RESIZE
+        | imgui.WINDOW_NO_BACKGROUND
+        | imgui.WINDOW_NO_DECORATION,
+    )
+    for text in texts:
+        imgui.text(text)
+    imgui.end()
+
+    imgui.render()
+    text_renderer.render(imgui.get_draw_data())
 
 
 @contextlib.contextmanager

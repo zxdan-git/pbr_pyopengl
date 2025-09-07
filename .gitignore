@@ -13,3 +13,6 @@ build/
 .vscode/
 
 .DS_Store
+
+# Configuration file
+*.ini

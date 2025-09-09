@@ -83,7 +83,7 @@ def bounding_volume_hierarchy_test(program_id, shapes: List[Shape], text_rendere
         "Current BVH INFO:",
         "   Name: %s" % bvh_type_names[bvh_type_id],
         "   Current Level: %d" % bvh_level,
-        "   SAH: %f" % bvh_cost,
+        "   Ray Intersect Cost: %f" % bvh_cost,
     )
     view_mat_loc = gl.glGetUniformLocation(program_id, "view")
     view_mat = transform.world_to_camera(camera_pos, camera_target, camera_up)

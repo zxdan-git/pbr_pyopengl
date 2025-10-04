@@ -28,13 +28,10 @@ def partition(array, start, end, predict):
     while i < j:
         while i < j and predict(array[i]):
             i += 1
-        if i == j:
-            return i
         while i < j and not predict(array[j - 1]):
             j -= 1
-        if i == j:
-            return j
-        array[i], array[j - 1] = array[j - 1], array[i]
+        if i < j:
+            array[i], array[j - 1] = array[j - 1], array[i]
     return i
 
 

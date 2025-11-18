@@ -16,3 +16,6 @@ build/
 
 # Configuration file
 *.ini
+
+# Output results
+pics/*

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
 
-from raytracing.util import (
+from raytracing.shape_sample_util import (
     uniform_sample_hemisphere,
     uniform_sample_sphere,
     uniform_sample_disk,

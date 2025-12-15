@@ -1,6 +1,8 @@
 import numpy as np
 from numpy.typing import NDArray
 
+from .util import normalize
+
 
 def uniform_sample_hemisphere(u: NDArray[np.float32]) -> NDArray[np.float32]:
     """

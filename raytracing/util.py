@@ -105,3 +105,30 @@ def radix_sort_binary(
             bucket_id = (value >> (pass_i * bits_per_pass)) & mask
             array[bucket_start[bucket_id]] = array_copy[idx]
             bucket_start[bucket_id] += 1
+
+
+def search_interval(sorted_values, pivot, start, end, value_func=lambda value: value):
+    """
+    Find the start index i of the interval [i, i+1) such that
+    value_func(sorted_values[i]) <= pivot < value_func(sorted_values[i + 1]),
+    searching only within indices [start, end].
+
+    Range: start is inclusive; end is the last element index (inclusive).
+    Intervals considered have starts i in [start, end - 1].
+    end must satisfy end <= len(sorted_values) - 1.
+
+    Returns: the interval start index i, or -1 if no interval exists in the
+    given range (e.g., pivot < v[start], pivot >= v[end], or end - start < 1).
+
+    Assumes: sorted_values is non-decreasing (e.g., a CDF).
+    """
+    i, j = start, np.min([end, len(sorted_values) - 1])
+    while i < j:
+        mid = (i + j) // 2
+        if pivot < value_func(sorted_values[mid]):
+            j = mid
+        elif pivot >= value_func(sorted_values[mid + 1]):
+            i = mid + 1
+        else:
+            return mid
+    return -1

@@ -2,6 +2,7 @@ import numpy as np
 from typing import List
 
 from ..bounding_box import AABB
+from ..intersection import Intersection
 from ..ray import Ray
 from ..ray_intersect_object import RayIntersectObject
 
@@ -13,29 +14,27 @@ class BuildNode(RayIntersectObject):
         self.bbx = AABB()
         self.objects: List[RayIntersectObject] = []
 
-    def ray_intersect(self, ray: Ray):
+    def ray_intersect(self, ray: Ray) -> Intersection:
         if not self.bbx.ray_intersect(ray):
             return None
 
-        if len(self.objects):
-            intersect = False
+        # If it is a leaf node, directly check the intersections from its
+        # objects.
+        intersection = None
+        if len(self.objects) == 0:
             for object in self.objects:
-                if not object.ray_intersect(ray) is None:
-                    intersect = True
+                ray_intersection = object.ray_intersect(ray)
+                if not ray_intersection is None:
+                    intersection = ray_intersection
+            return intersection
 
-            # Note: we should return ray.t_max to get the nearest
-            # intersection.
-            if intersect:
-                return ray.t_max
-            else:
-                return None
-
+        # Otherwise, continue tranversal.
         for child in [self.left, self.right]:
             if not child is None:
-                intersect = child.ray_intersect(ray)
-                if not intersect is None:
-                    return intersect
-        return None
+                ray_intersection = child.ray_intersect(ray)
+                if not ray_intersection is None:
+                    intersection = ray_intersection
+        return intersection
 
     def ray_intersect_cost(self):
         # Using SAH as the intersection cost.

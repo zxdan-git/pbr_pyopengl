@@ -99,6 +99,8 @@ class AABB:
         for i in range(3):
             inv_i = self.get_range(i).to_array()
             if np.isclose(ray.dir[i], 0):
+                if ray.pos[i] > inv_i[1] or ray.pos[i] < inv_i[0]:
+                    return None
                 continue
             time_range = (inv_i - ray.pos[i]) / np.float32(ray.dir[i])
             time_inv = Interval.intersect(
@@ -106,8 +108,10 @@ class AABB:
             )
             if time_inv.empty():
                 return None
-        if time_inv.lower >= 0:
+
+        if 0 <= time_inv.lower < ray.t_max:
             return time_inv.lower
-        elif time_inv.upper < ray.t_max:
+
+        if 0 <= time_inv.upper < ray.t_max:
             return time_inv.upper
         return None

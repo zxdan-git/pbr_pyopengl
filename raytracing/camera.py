@@ -1,9 +1,11 @@
 import imageio
+import matplotlib.pyplot as plt
 import numpy as np
-from numpy.typing import NDArray
 from os import path
 
+from .constants import zero3f
 from .transform import camera_to_world
+from .typing import Vec2u, Vec3f
 from .util import normalize
 from .ray import Ray
 
@@ -11,7 +13,7 @@ from .ray import Ray
 class Camera:
     def __init__(
         self,
-        pos=np.zeros(3, dtype=np.float32),
+        pos=zero3f(),
         look_at=np.array([0, 0, -1], dtype=np.float32),
         up=np.array([0, 1, 0], dtype=np.float32),
         fov=60,
@@ -32,7 +34,7 @@ class Camera:
         return self.__pos.copy()
 
     @pos.setter
-    def pos(self, new_pos):
+    def pos(self, new_pos: Vec3f):
         self.__pos = new_pos
         self.__update_camera_parameters()
 
@@ -41,7 +43,7 @@ class Camera:
         return self.__look_at.copy()
 
     @look_at.setter
-    def look_at(self, new_look_at):
+    def look_at(self, new_look_at: Vec3f):
         self.__look_at = new_look_at
         self.__update_camera_parameters()
 
@@ -50,7 +52,7 @@ class Camera:
         return self.__pos.copy()
 
     @up.setter
-    def up(self, new_up):
+    def up(self, new_up: Vec3f):
         self.__up = new_up
         self.__update_camera_parameters()
 
@@ -59,7 +61,7 @@ class Camera:
         return self.__fov.copy()
 
     @fov.setter
-    def fov(self, new_fov):
+    def fov(self, new_fov: np.float32):
         self.__fov = new_fov
         self.__update_camera_parameters()
 
@@ -68,7 +70,7 @@ class Camera:
         return self.__film_width.copy()
 
     @film_width.setter
-    def film_width(self, new_film_width):
+    def film_width(self, new_film_width: np.uint32):
         self.__film_width = new_film_width
         self.__reset_film()
 
@@ -77,7 +79,7 @@ class Camera:
         return self.__film_height.copy()
 
     @film_height.setter
-    def film_height(self, new_film_height):
+    def film_height(self, new_film_height: np.uint32):
         self.__film_height = new_film_height
         self.__reset_film()
 
@@ -86,7 +88,7 @@ class Camera:
         return np.array([self.__film_width, self.__film_height], dtype=np.uint32)
 
     @film_size.setter
-    def film_size(self, new_size: NDArray[np.uint32]):
+    def film_size(self, new_size: Vec2u):
         self.film_width = new_size[0]
         self.film_height = new_size[1]
         self.__reset_film()
@@ -103,11 +105,18 @@ class Camera:
         )
         return Ray(self.__pos, normalize(target[:3] - self.__pos))
 
-    def write_to(self, row, col, rgb: NDArray[np.float32]):
+    def write_to(self, row, col, rgb: Vec3f):
         self.__film[row][col] = rgb
 
     def save_film(self, output_path, file_name):
         imageio.imwrite(path.join(output_path, file_name + ".tiff"), self.__film)
+
+    def show_film(self):
+        plt.figure("Preview")
+        plt.imshow(self.__film)
+        plt.axis("off")
+        plt.tight_layout()
+        plt.show()
 
     def __update_camera_parameters(self):
         self.__camera_to_world = camera_to_world(self.__pos, self.__look_at, self.__up)

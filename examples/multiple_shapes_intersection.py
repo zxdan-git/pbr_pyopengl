@@ -60,7 +60,7 @@ def multiple_shapes_intersection_test(window, program_id, shapes: List[Shape]):
         with glutil.create_index_buffer_object(shape.face_index + index_offset):
             gl.glUniformMatrix4fv(model_mat_loc, 1, True, shape.transform)
             intersect = shape.ray_intersect(ray)
-            if (not intersect is None) and np.isclose(intersect, ray.t_max):
+            if not intersect is None:
                 gl.glUniform1i(mode_loc, 2)
             else:
                 gl.glUniform1i(mode_loc, 0)

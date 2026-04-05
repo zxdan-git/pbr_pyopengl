@@ -1,3 +1,5 @@
+from typing import List, Callable
+from enum import Enum
 import numpy as np
 
 from .bounding_box import AABB
@@ -9,11 +11,10 @@ from .bvh_util.partition_util import (
 )
 from .bvh_util.recursive_build import build_by_axis_spread
 from .bvh_util.hybrid_build import build_with_morton_code
+from .intersection import Intersection
 from .interval import Interval
 from .ray import Ray
 from .ray_intersect_object import RayIntersectObject
-from typing import List, Callable
-from enum import Enum
 
 
 class BVH(RayIntersectObject):
@@ -46,7 +47,7 @@ class BVH(RayIntersectObject):
             return AABB()
         return self.__root.bounding_box
 
-    def ray_intersect(self, ray: Ray):
+    def ray_intersect(self, ray: Ray) -> Intersection:
         return self.__root.ray_intersect(ray)
 
     def ray_intersect_cost(self):

@@ -2,18 +2,19 @@ import numpy as np
 
 from .ray import Ray
 from .transform import camera_to_world
+from .typing import Vec3f
 from .util import normalize
 
 
 def camera_ray(
-    target_x,
-    target_y,
-    camera_pos,
-    camera_center,
-    camera_up,
-    fov,
-    film_width,
-    film_height,
+    target_x: Vec3f,
+    target_y: Vec3f,
+    camera_pos: Vec3f,
+    camera_center: Vec3f,
+    camera_up: Vec3f,
+    fov: np.float32,
+    film_width: np.float32,
+    film_height: np.float32,
 ) -> Ray:
     """
     1. Get target position on the film in camera space:

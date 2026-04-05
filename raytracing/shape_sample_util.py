@@ -1,10 +1,10 @@
 import numpy as np
-from numpy.typing import NDArray
 
+from .typing import Vec2f, Vec3f
 from .util import normalize
 
 
-def uniform_sample_hemisphere(u: NDArray[np.float32]) -> NDArray[np.float32]:
+def uniform_sample_hemisphere(u: Vec2f) -> Vec3f:
     """
     Uniformly sample a point on the unit hemisphere.
 
@@ -28,7 +28,7 @@ def uniform_hemisphere_pdf() -> np.float32:
     return 0.5 / np.pi
 
 
-def uniform_sample_sphere(u: NDArray[np.float32]) -> NDArray[np.float32]:
+def uniform_sample_sphere(u: Vec2f) -> Vec3f:
     """
     Uniformly sample a point on the unit sphere.
     """
@@ -44,7 +44,7 @@ def uniform_sphere_pdf() -> np.float32:
     return 0.25 / np.pi
 
 
-def uniform_sample_disk(u: NDArray[np.float32]) -> NDArray[np.float32]:
+def uniform_sample_disk(u: Vec2f) -> Vec3f:
     """
     Uniformly sample a point on a unit disk.
 
@@ -67,7 +67,7 @@ def uniform_disk_pdf():
     return 1 / np.pi
 
 
-def concentric_sample_disk(u: NDArray[np.float32]) -> NDArray[np.float32]:
+def concentric_sample_disk(u: Vec2f) -> Vec3f:
     """
     Concentricly sample a unit disk. Map points in the square x in [-1, 1] and
     y in [-1, 1] to the unit disk.
@@ -90,7 +90,7 @@ def concentric_sample_disk(u: NDArray[np.float32]) -> NDArray[np.float32]:
     return np.array([r * np.cos(theta), r * np.sin(theta), 0], dtype=np.float32)
 
 
-def cosine_sample_hemisphere(u: NDArray[np.float32]) -> NDArray[np.float32]:
+def cosine_sample_hemisphere(u: Vec2f) -> Vec3f:
     """
     Cosine weighted sample a unit hemisphere such that the pdf of the sample is
     proportional to cos(theta).
@@ -117,14 +117,12 @@ def cosine_sample_hemisphere(u: NDArray[np.float32]) -> NDArray[np.float32]:
     return np.array([x, y, z], dtype=np.float32)
 
 
-def cosine_sample_hemisphere_pdf(p: NDArray[np.float32]):
+def cosine_sample_hemisphere_pdf(p: Vec3f):
     normalized_p = normalize(p)
-    return normalized_p[2] / np.pi
+    return np.abs(normalized_p[2]) / np.pi
 
 
-def uniform_sample_direction_in_cone(
-    u: NDArray[np.float32], theta_max: np.float32
-) -> NDArray[np.float32]:
+def uniform_sample_direction_in_cone(u: Vec2f, theta_max: np.float32) -> Vec3f:
     """
     Uniformly sample a direction within a cone whose half angle is theta_max.
 
@@ -156,7 +154,7 @@ def uniform_sample_cone_pdf(theta_max: np.float32):
     return 0.5 / (np.pi * (1 - np.cos(theta_max)))
 
 
-def uniform_sample_triangle(u: NDArray[np.float32], vertices) -> NDArray[np.float32]:
+def uniform_sample_triangle(u: Vec2f, vertices) -> Vec3f:
     """
     Uniformly sammple a point on a triangle with given vertices.
 

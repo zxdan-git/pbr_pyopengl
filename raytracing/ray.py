@@ -1,11 +1,13 @@
 import numpy as np
 
+from .constants import INF
+
 
 class Ray:
     def __init__(self, pos, dir):
         self.pos = pos
         self.dir = dir
-        self.t_max = np.inf
+        self.t_max = INF
 
     @staticmethod
     def transform(ray, transform_mat):
@@ -17,4 +19,4 @@ class Ray:
         return self.pos + self.dir * t
 
     def reset_t_max(self):
-        self.t_max = np.inf
+        self.t_max = INF

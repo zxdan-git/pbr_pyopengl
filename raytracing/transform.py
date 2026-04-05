@@ -1,9 +1,20 @@
 import numpy as np
 
+from .typing import Vec3f, Mat4f
 from .util import normalize
 
 
-def world_to_camera(pos, look_at, up):
+def transform_dir(mat: Mat4f, dir: Vec3f) -> Vec3f:
+    dir_t = mat @ np.append(dir, 0)
+    return dir_t[:3]
+
+
+def transform_pos(mat: Mat4f, pos: Vec3f) -> Vec3f:
+    pos_t = mat @ np.append(pos, 1)
+    return pos_t[:3]
+
+
+def world_to_camera(pos: Vec3f, look_at: Vec3f, up: Vec3f):
     """
     Transform a position p in the world space to the the camera space.
 
@@ -34,7 +45,7 @@ def world_to_camera(pos, look_at, up):
     return view_mat
 
 
-def camera_to_world(pos, look_at, up):
+def camera_to_world(pos: Vec3f, look_at: Vec3f, up: Vec3f):
     """
     Transform a postion p in the camera space to the world space.
 
@@ -67,7 +78,7 @@ def camera_to_world(pos, look_at, up):
     return view_mat
 
 
-def perspective(fov, aspect, near, far):
+def perspective(fov: np.float32, aspect: np.float32, near: np.float32, far: np.float32):
     """
     Transform a position p in camera space to the clip space.
 
@@ -117,19 +128,19 @@ def perspective(fov, aspect, near, far):
     )
 
 
-def scale(sx, sy, sz):
+def scale(sx: np.float32, sy: np.float32, sz: np.float32):
     return np.array(
         [[sx, 0, 0, 0], [0, sy, 0, 0], [0, 0, sz, 0], [0, 0, 0, 1]], dtype=np.float32
     )
 
 
-def translate(tx, ty, tz):
+def translate(tx: np.float32, ty: np.float32, tz: np.float32):
     mat = np.identity(4)
     mat[:3, 3] = np.array([tx, ty, tz], dtype=np.float32)
     return mat
 
 
-def rotate_X(angle):
+def rotate_X(angle: np.float32):
     c = np.cos(angle)
     s = np.sin(angle)
     return np.array(
@@ -137,7 +148,7 @@ def rotate_X(angle):
     )
 
 
-def rotate_Y(angle):
+def rotate_Y(angle: np.float32):
     c = np.cos(angle)
     s = np.sin(angle)
     return np.array(
@@ -145,7 +156,7 @@ def rotate_Y(angle):
     )
 
 
-def rotate_Z(angle):
+def rotate_Z(angle: np.float32):
     c = np.cos(angle)
     s = np.sin(angle)
     return np.array(
@@ -153,7 +164,7 @@ def rotate_Z(angle):
     )
 
 
-def rotate(axis, angle):
+def rotate(axis: Vec3f, angle: np.float32):
     """
     Rotate any vector p around axis by angle.
     Decompose the vector p into two components:
@@ -196,6 +207,40 @@ def rotate(axis, angle):
                 0,
             ],
             [0, 0, 0, 1],
+        ],
+        dtype=np.float32,
+    )
+
+
+def world_to_local_from_single_dir(dir: Vec3f) -> Mat4f:
+    if np.isclose(np.linalg.norm(dir), 0):
+        raise ValueError("Given direction cannot be 0")
+
+    # Use the given axis as the Z axis of the local framework.
+    z_axis = normalize(dir)
+
+    # Build an X axis that is perpendicular to the Z axis.
+    # We can build the X axis by making one dimension of the Z axis 0, and
+    # switch the other two dimensions, negate one of them, e.g.,
+    # X [0, Z[2], -Z[1]] such that X.Z = 0.
+    # To avoid making X a zero vector, we should select the dimension with the
+    # smallest absolute value of Z axis to be 0, because Z is not zero, so it
+    # guarantees that the other two dimension cannot both be 0.
+    min_dim = np.argmin(np.abs(z_axis))
+    x_axis = np.zeros(3, dtype=np.float32)
+    x_axis[min_dim] = 0
+    x_axis[(min_dim + 1) % 3] = z_axis[(min_dim + 2) % 3]
+    x_axis[(min_dim + 2) % 3] = -z_axis[(min_dim + 1) % 3]
+    x_axis = normalize(x_axis)
+
+    # Get the Y axis with cross product.
+    y_axis = np.cross(z_axis, x_axis)
+    return np.array(
+        [
+            np.append(x_axis, 0),
+            np.append(y_axis, 0),
+            np.append(z_axis, 0),
+            np.array([0, 0, 0, 1], dtype=np.float32),
         ],
         dtype=np.float32,
     )

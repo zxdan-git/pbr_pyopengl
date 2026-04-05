@@ -1,6 +1,6 @@
 import numpy as np
-from numpy.typing import NDArray
 
+from .typing import Vec2f
 from .util import search_interval
 
 
@@ -29,7 +29,7 @@ class Distribution2D:
             [distribution.values_int for distribution in self.distributions]
         )
 
-    def sample(self, u: NDArray[np.float32]):
+    def sample(self, u: Vec2f):
         sample_idx_1 = self.values_distribution.sample(u[0])
         sample_idx_2 = self.distributions[sample_idx_1].sample(u[1])
         return (sample_idx_1, sample_idx_2)

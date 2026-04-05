@@ -1,11 +1,18 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from enum import IntFlag
+from typing import Tuple
+
 import numpy as np
 
 from .bounding_box import AABB
+from .constants import INF, zero2f, zero3f, ZERO3F
+from .intersection import Intersection
+from .material import Material
 from .ray import Ray
 from .ray_intersect_object import RayIntersectObject
-from .util import det3x3
+from .transform import transform_dir
+from .util import det3x3, normalize
+from .typing import Vec3f, Vec2f
 
 
 class Shape(RayIntersectObject):
@@ -22,6 +29,7 @@ class Shape(RayIntersectObject):
         self._inv_transform = np.identity(4)
         self.paint_mode = self.PaintMode.FACE
         self._bbx = AABB()
+        self.material: Material = None
 
     @property
     def vertex(self):
@@ -51,16 +59,20 @@ class Shape(RayIntersectObject):
     def bounding_box(self):
         return self._bbx
 
-    def ray_intersect(self, ray: Ray):
+    def ray_intersect(self, ray: Ray) -> Intersection:
         # Intersection of a shape would update the t_max of ray.
-        intersect = self._ray_intersect(ray)
-        if intersect is None or intersect > ray.t_max:
+        t, intersection = self._ray_intersect(ray)
+        if intersection is None or t > ray.t_max:
             return None
-        ray.t_max = intersect
-        return intersect
+        ray.t_max = t
+        return intersection
 
     def ray_intersect_cost(self):
         return 1
+
+    def normal_to_world(self, n_local):
+        n_world = transform_dir(np.transpose(self._transform), n_local)
+        return normalize(n_world)
 
     def _update_bounding_box(self):
         self._bbx = AABB()
@@ -69,8 +81,8 @@ class Shape(RayIntersectObject):
             self._bbx.embrace(t_pos[:3])
 
     @abstractmethod
-    def _ray_intersect(self, ray: Ray):
-        return None
+    def _ray_intersect(self, ray: Ray) -> Tuple[np.float32, Intersection]:
+        return INF, None
 
 
 class Sphere(Shape):
@@ -81,7 +93,7 @@ class Sphere(Shape):
         self._generate_line_index(nu, nv)
         self._bbx = AABB(-1, 1, -1, 1, -1, 1)
 
-    def _ray_intersect(self, ray: Ray):
+    def _ray_intersect(self, ray: Ray) -> Tuple[np.float32, Intersection]:
         """
         suppose the ray intersect with the sphere at o + t.d
 
@@ -89,22 +101,38 @@ class Sphere(Shape):
 
         ||d||^2t^2 + 2.o.d.t + ||o||^2 - 1 = 0
 
-        t = -2.o.d +/- sqrt(4(o.d)^2 - 4||d||^2(||o||^2 - 1)) / (2||d||^2)
+        t = [-2.o.d +/- sqrt(4(o.d)^2 - 4||d||^2(||o||^2 - 1))] / (2||d||^2)
         """
-        t_ray = Ray.transform(ray, self._inv_transform)
-        term_a = np.power(np.linalg.norm(t_ray.dir), 2)
+        ray_t = Ray.transform(ray, self._inv_transform)
+        term_a = np.power(np.linalg.norm(ray_t.dir), 2)
         if np.isclose(term_a, 0):
-            return None
-        term_b = 2 * np.dot(t_ray.dir, t_ray.pos)
-        term_c = np.power(np.linalg.norm(t_ray.pos), 2) - 1
+            return INF, None
+        term_b = 2 * np.dot(ray_t.dir, ray_t.pos)
+        term_c = np.power(np.linalg.norm(ray_t.pos), 2) - 1
 
         discriminant = term_b * term_b - 4 * term_a * term_c
         if discriminant < 0:
-            return None
+            return INF, None
 
         t_1 = (-term_b + np.sqrt(discriminant)) / (2 * term_a)
         t_2 = (-term_b - np.sqrt(discriminant)) / (2 * term_a)
-        return np.min([t_1, t_2])
+        t = INF
+        if t_2 >= 0:
+            t = t_2
+        elif t_1 >= 0:
+            t = t_1
+        else:
+            return t, None
+
+        pos_t = ray_t.at(t)
+        n = self.normal_to_world(pos_t)
+        uv = self._get_uv_for_local_pos(pos_t)
+        return t, Intersection(ray.at(t), n, uv, self.material)
+
+    def _get_uv_for_local_pos(self, pos_t: Vec3f) -> Vec2f:
+        theta = np.acos(pos_t[1])
+        phi = np.atan2(pos_t[0], pos_t[2])
+        return np.array([0.5 + 0.5 * phi / np.pi, theta / np.pi], dtype=np.float32)
 
     def _generate_vertex(self, nu, nv):
         vertex = []
@@ -276,50 +304,111 @@ class Cube(Shape):
         )
         self._bbx = AABB(-1, 1, -1, 1, -1, 1)
 
-    def _ray_intersect(self, ray: Ray):
-        t_ray = Ray.transform(ray, self._inv_transform)
+    def _ray_intersect(self, ray: Ray) -> Tuple[np.float32, Intersection]:
+        ray_t = Ray.transform(ray, self._inv_transform)
         bbx = AABB(-1, 1, -1, 1, -1, 1)
-        return bbx.ray_intersect(t_ray)
+        t = bbx.ray_intersect(ray_t)
+        if t is None:
+            return INF, None
+
+        pos = ray.at(t)
+        pos_t = ray_t.at(t)
+        n_t = zero3f()
+        uv = zero2f()
+        for i in range(3):
+            for dir in [1, -1]:
+                if np.isclose(pos_t[i], dir):
+                    n_t[i] = dir
+                    uv[0] = 0.5 + 0.5 * pos_t[(i + 1) % 3]
+                    uv[1] = 0.5 + 0.5 * pos_t[(i + 2) % 3]
+                    break
+        if np.allclose(n_t, ZERO3F):
+            raise ValueError(str(pos_t) + str(n_t) + "the normal is zero")
+        n = self.normal_to_world(n_t)
+        return t, Intersection(pos, n, uv, self.material)
 
 
 class Triangle(Shape):
-    def __init__(self, v0, v1, v2):
+    def __init__(
+        self,
+        v0: Vec3f,
+        v1: Vec3f,
+        v2: Vec3f,
+        uv0: Vec2f = None,
+        uv1: Vec2f = None,
+        uv2: Vec2f = None,
+    ):
         super().__init__()
         self._vertex = np.array([v0, v1, v2], dtype=np.float32)
+        if (not uv0 is None) and (not uv1 is None) and (not uv2 is None):
+            self._tex_coord = np.array([uv0, uv1, uv2], dtype=np.float32)
+        else:
+            self._tex_coord = self._get_default_tex_coord()
         self._face_index = np.array([0, 1, 2], dtype=np.uint32)
         self._line_index = np.array([0, 1, 1, 2, 2, 0], dtype=np.uint32)
         for v in [v0, v1, v2]:
             self._bbx.embrace(v)
 
-    def _ray_intersect(self, ray: Ray):
+    def _get_default_tex_coord(self):
+        """
+        Select the longest side whose ends are (0, 0) and (0, 1) and build a
+        texture coordinate.
+        """
+        max_len = -1
+        idx = -1
+        for i in range(3):
+            v = self._vertex[(i + 1) % 3] - self._vertex[i]
+            v_len = np.linalg.norm(v)
+            if max_len < v_len:
+                max_len = v_len
+                idx = i
+        tex_coord = np.zeros((3, 2), dtype=np.float32)
+        tex_coord[idx] = np.array([0, 0], dtype=np.float32)
+        tex_coord[(idx + 1) % 3] = np.array([0, 1], dtype=np.float32)
+
+        v1 = self._vertex[(idx + 1) % 3] - self._vertex[idx]
+        v2 = self._vertex[(idx + 2) % 3] - self._vertex[idx]
+        v2_len = np.linalg.norm(v2)
+        cos_v2 = np.abs(np.dot(v1, v2) / v_len)
+        sin_v2 = np.sqrt(v2_len * v2_len - cos_v2 * cos_v2)
+        tex_coord[(idx + 2) % 3] = np.array(
+            [sin_v2 / v_len, cos_v2 / v_len], dtype=np.float32
+        )
+        return tex_coord
+
+    def _ray_intersect(self, ray: Ray) -> Tuple[np.float32, Intersection]:
         """
         alpha (v1 - v0) + beta (v2 - v0) + v0 = o + t.d
         (v1 - v0, v2 - v0, -d) @ (alpha, beta, t) = o - v0
         alpha, beta, t = inv((v1 - v0, v2 - v0, -d)) @ (o - v0)
         """
-        t_ray = Ray.transform(ray, self._inv_transform)
+        ray_t = Ray.transform(ray, self._inv_transform)
         v0, v1, v2 = self._vertex
-        cofficient = np.array([v1 - v0, v2 - v0, -t_ray.dir], dtype=np.float32)
-        b = t_ray.pos - v0
+        cofficient = np.array([v1 - v0, v2 - v0, -ray_t.dir], dtype=np.float32)
+        b = ray_t.pos - v0
         det = det3x3(cofficient)
         if np.isclose(det, 0):
-            return None
+            return INF, None
 
         inv_det = 1 / det
 
-        alpha = det3x3(np.array([b, v2 - v0, -t_ray.dir], dtype=np.float32)) * inv_det
+        alpha = det3x3(np.array([b, v2 - v0, -ray_t.dir], dtype=np.float32)) * inv_det
         if alpha < 0 or alpha > 1:
-            return None
+            return INF, None
 
-        beta = det3x3(np.array([v1 - v0, b, -t_ray.dir], dtype=np.float32)) * inv_det
+        beta = det3x3(np.array([v1 - v0, b, -ray_t.dir], dtype=np.float32)) * inv_det
         if beta < 0 or beta > 1:
-            return None
+            return INF, None
 
         gamma = alpha + beta
         if gamma < 0 or gamma > 1:
-            return None
+            return INF, None
 
         t = det3x3(np.array([v1 - v0, v2 - v0, b], dtype=np.float32)) * inv_det
         if t < 0:
-            return None
-        return t
+            return INF, None
+
+        pos = ray.at(t)
+        n_t = normalize(np.cross(v1 - v0, v2 - v0))
+        uv = np.transpose(self._tex_coord) @ np.array([gamma, alpha, beta])
+        return t, Intersection(pos, self.normal_to_world(n_t), uv, self.material)

@@ -27,11 +27,15 @@ class DirectRayTracer:
         if inter is None:
             return zero3f()
         if sample_strategy == DirectRayTracer.SampleStrategy.UNIFORM_SAMPLE_ALL:
+            lo = zero3f()
             for light in self.lights:
-                return self.uniform_sample_light(inter, -view_ray.dir, light)
+                lo += self.uniform_sample_light(inter, -view_ray.dir, light)
+            return lo
         elif sample_strategy == DirectRayTracer.SampleStrategy.UNIFORM_SAMPLE_ONE:
             light = self.lights[np.random.randint(len(self.lights))]
-            return self.uniform_sample_light(inter, -view_ray.dir, light)
+            return len(self.lights) * self.uniform_sample_light(
+                inter, -view_ray.dir, light
+            )
         return zero3f()
 
     def uniform_sample_light(self, intersection: Intersection, wo: Vec3f, light: Light):

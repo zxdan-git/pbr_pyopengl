@@ -21,7 +21,7 @@ class BuildNode(RayIntersectObject):
         # If it is a leaf node, directly check the intersections from its
         # objects.
         intersection = None
-        if len(self.objects) == 0:
+        if len(self.objects) != 0:
             for object in self.objects:
                 ray_intersection = object.ray_intersect(ray)
                 if not ray_intersection is None:

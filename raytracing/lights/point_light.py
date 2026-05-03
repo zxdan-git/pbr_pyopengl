@@ -6,7 +6,7 @@ from ..typing import Vec3f, Vec2f
 
 class PointLight(Light):
     def __init__(self, intensity: Vec3f, pos: Vec3f):
-        super().__init__()
+        super().__init__(Light.Type.DELTA_AREA)
         self.__intensity = intensity
         self.pos = pos
 
@@ -18,6 +18,3 @@ class PointLight(Light):
         light_sample.pdf = 1
         light_sample.le = self.__intensity / (dist_len * dist_len)
         return light_sample
-
-    def pdf(self, wo: Vec3f) -> np.float32:
-        return 0

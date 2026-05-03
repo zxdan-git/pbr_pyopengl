@@ -1,6 +1,5 @@
 from typing import List, Callable
 from enum import Enum
-import numpy as np
 
 from .bounding_box import AABB
 from .bvh_util.build_node import BuildNode

@@ -15,7 +15,7 @@ class BuildNode(RayIntersectObject):
         self.objects: List[RayIntersectObject] = []
 
     def ray_intersect(self, ray: Ray) -> Intersection:
-        if not self.bbx.ray_intersect(ray):
+        if self.bbx.ray_intersect(ray) is None:
             return None
 
         # If it is a leaf node, directly check the intersections from its

@@ -4,7 +4,7 @@ import numpy as np
 def normalize(v):
     norm = np.linalg.norm(v)
     if np.isclose(norm, 0):
-        return v
+        raise ValueError("Trying to normalize a zero vector")
     return v / norm
 
 

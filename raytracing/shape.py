@@ -10,7 +10,13 @@ from .intersection import Intersection
 from .material import Material
 from .ray import Ray
 from .ray_intersect_object import RayIntersectObject
-from .transform import transform_dir
+from .transform import transform_dir, transform_pos
+from .shape_sample_util import (
+    uniform_sample_sphere,
+    uniform_sphere_pdf,
+    uniform_sample_triangle,
+    uniform_sample_triangle_pdf,
+)
 from .util import det3x3, normalize
 from .typing import Vec3f, Vec2f
 
@@ -23,17 +29,25 @@ class Shape(RayIntersectObject):
 
     def __init__(self):
         self._vertex = np.empty((0, 3))
+        self.__transformed_vertex = np.empty((0, 3))
         self._face_index = np.array([], dtype=np.uint32)
         self._line_index = np.array([], dtype=np.uint32)
         self._transform = np.identity(4)
         self._inv_transform = np.identity(4)
         self.paint_mode = self.PaintMode.FACE
         self._bbx = AABB()
+        self._area = -1
         self.material: Material = None
 
     @property
     def vertex(self):
         return self._vertex
+
+    @property
+    def transformed_vertex(self):
+        if self.__transformed_vertex.shape[0] == 0:
+            self.__transformed_vertex = self._vertex.copy()
+        return self.__transformed_vertex
 
     @property
     def face_index(self):
@@ -53,11 +67,23 @@ class Shape(RayIntersectObject):
             return
         self._transform = new_transform
         self._inv_transform = np.linalg.inv(new_transform)
+        self.__transformed_vertex = np.array(
+            [transform_pos(self.transform, v) for v in self._vertex], dtype=np.float32
+        )
         self._update_bounding_box()
+        self._update_area()
 
     @property
     def bounding_box(self):
+        if self._bbx.empty():
+            self._update_bounding_box()
         return self._bbx
+
+    @property
+    def area(self):
+        if self._area == -1:
+            self._update_area()
+        return self._area
 
     def ray_intersect(self, ray: Ray) -> Intersection:
         # Intersection of a shape would update the t_max of ray.
@@ -70,15 +96,54 @@ class Shape(RayIntersectObject):
     def ray_intersect_cost(self):
         return 1
 
-    def normal_to_world(self, n_local):
-        n_world = transform_dir(np.transpose(self._transform), n_local)
+    @abstractmethod
+    def sample(self, u: Vec2f) -> Intersection:
+        return Intersection()
+
+    def sample_for_target(self, target: Vec3f, u: Vec2f) -> Intersection:
+        return self.sample(u)
+
+    def sample_pdf(self, intersection: Intersection):
+        return 1 / self.area()
+
+    def sample_pdf_for_target(self, target: Vec3f, dir: Vec3f):
+        dir_norm = normalize(dir)
+        ray = Ray(target, dir_norm)
+        intersection = self.ray_intersect(ray)
+        if intersection is None:
+            return 0
+        dist = intersection.pos - target
+        dist_len = np.linalg.norm(dist)
+        """
+        p(A) = 1 / area.
+        dw = dA * cos(theta) / r^2.
+        P(w) = P(A(w))
+        p(w) = p(A) * dA / dw
+        p(w) = p(A) * r^2 / cos(theta) = r^2 / (area * cos(theta))
+        """
+        return dist_len * dist_len / self.area / np.abs(np.dot(-dir, intersection.n))
+
+    def normal_to_world(self, n_local) -> Vec3f:
+        n_world = transform_dir(np.transpose(self._inv_transform), n_local)
         return normalize(n_world)
+
+    def pos_to_world(self, pos_local) -> Vec3f:
+        return transform_pos(self._transform, pos_local)
 
     def _update_bounding_box(self):
         self._bbx = AABB()
-        for i in range(self._vertex.shape[0]):
-            t_pos = self._transform @ np.append(self._vertex[i], 1)
-            self._bbx.embrace(t_pos[:3])
+        vertex = self.transformed_vertex
+        for v_t in vertex:
+            self._bbx.embrace(v_t)
+
+    def _update_area(self):
+        self._area = 0
+        vertex = self.transformed_vertex
+        for i in range(0, self._face_index.shape[0], 3):
+            p0 = vertex[self._face_index[i]]
+            p1 = vertex[self._face_index[i + 1]]
+            p2 = vertex[self._face_index[i + 2]]
+            self._area += 0.5 * np.linalg.norm(np.cross(p1 - p0, p2 - p0))
 
     @abstractmethod
     def _ray_intersect(self, ray: Ray) -> Tuple[np.float32, Intersection]:
@@ -92,6 +157,21 @@ class Sphere(Shape):
         self._generate_face_index(nu, nv)
         self._generate_line_index(nu, nv)
         self._bbx = AABB(-1, 1, -1, 1, -1, 1)
+
+    def sample(self, u: Vec2f) -> Intersection:
+        intersection = Intersection()
+        local_pos = uniform_sample_sphere(u)
+        intersection.pos = self.pos_to_world(local_pos)
+        intersection.n = self.normal_to_world(normalize(local_pos))
+        intersection.uv = self._get_uv_for_local_pos(local_pos)
+        intersection.sample_pdf = uniform_sphere_pdf()
+        intersection.mat = self.material
+        return intersection
+
+    """
+    def sample_for_target(self, target: Vec3f, u: Vec2f) -> Intersection:
+        return None
+    """
 
     def _ray_intersect(self, ray: Ray) -> Tuple[np.float32, Intersection]:
         """
@@ -230,7 +310,7 @@ class Cube(Shape):
                 5,
                 1,
                 0,
-                5,
+                4,
                 5,
                 # back
                 3,
@@ -304,6 +384,42 @@ class Cube(Shape):
         )
         self._bbx = AABB(-1, 1, -1, 1, -1, 1)
 
+    def sample(self, u: Vec2f) -> Intersection:
+        intersection = Intersection()
+        """
+        Select a face with the first random number u0.
+        0: x = 1
+        1: x = -1
+        2: y = 1
+        3: y = -1
+        4: z = 1
+        5: z = -1
+        """
+        local_pos = zero3f()
+        local_n = zero3f()
+        face_idx = int(6 * u[0]) % 6
+        axis = face_idx // 2
+        if face_idx % 2 == 0:
+            local_pos[axis] = 1
+            local_n[axis] = 1
+        else:
+            local_pos[axis] = -1
+            local_n[axis] = -1
+
+        """
+        Remap u0 and use u0 and u1 to sample the other two axis.
+        """
+        remapped_u0 = 6 * u[0] - face_idx
+        local_pos[(axis + 1) % 3] = -1 + 2 * remapped_u0
+        local_pos[(axis + 2) % 3] = -1 + 2 * u[1]
+
+        intersection.pos = self.pos_to_world(local_pos)
+        intersection.n = self.normal_to_world(local_n)
+        intersection.uv = np.array([remapped_u0, u[1]], dtype=np.float32)
+        intersection.sample_pdf = 1 / self.area()
+        intersection.mat = self.material
+        return intersection
+
     def _ray_intersect(self, ray: Ray) -> Tuple[np.float32, Intersection]:
         ray_t = Ray.transform(ray, self._inv_transform)
         bbx = AABB(-1, 1, -1, 1, -1, 1)
@@ -348,6 +464,43 @@ class Triangle(Shape):
         self._line_index = np.array([0, 1, 1, 2, 2, 0], dtype=np.uint32)
         for v in [v0, v1, v2]:
             self._bbx.embrace(v)
+
+    def sample(self, u: Vec2f) -> Intersection:
+        intersection = Intersection()
+        vertex = self.transformed_vertex
+        intersection.pos = uniform_sample_triangle(u, vertex)
+        intersection.n = normalize(
+            np.cross(
+                vertex[1] - vertex[0],
+                vertex[2] - vertex[0],
+            )
+        )
+        alpha, beta = self._get_barycentric_coord(intersection.pos)
+        intersection.uv = np.transpose(self._tex_coord) @ np.array(
+            [1 - alpha - beta, alpha, beta]
+        )
+        intersection.sample_pdf = 1 / self.area
+        intersection.mat = self.material
+        return intersection
+
+    def _get_barycentric_coord(self, pos: Vec3f) -> Vec2f:
+        vertex = self.transformed_vertex
+        area_1 = 0.5 * np.linalg.norm(
+            np.cross(
+                pos - vertex[0],
+                vertex[2] - vertex[0],
+            )
+        )
+        alpha = area_1 / self.area
+
+        area_2 = 0.5 * np.linalg.norm(
+            np.cross(
+                vertex[1] - vertex[0],
+                pos - vertex[0],
+            )
+        )
+        beta = area_2 / self.area
+        return np.array([alpha, beta], dtype=np.float32)
 
     def _get_default_tex_coord(self):
         """

@@ -2,7 +2,10 @@ from OpenGL import GL as gl
 import glfw
 import raytracing.glutil as glutil
 import raytracing.transform as transform
-from raytracing.shape import Shape, Sphere, Cube, Triangle
+from raytracing.shape import Shape
+from raytracing.shapes.sphere import Sphere
+from raytracing.shapes.cube import Cube
+from raytracing.shapes.triangle import Triangle
 from raytracing.ray import Ray
 from raytracing.bounding_box import AABB
 import raytracing.util as util

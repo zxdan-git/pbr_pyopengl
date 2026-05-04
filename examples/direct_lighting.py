@@ -12,7 +12,9 @@ from raytracing.bxdfs.lambertian import Lambertain
 from raytracing.materials.material_one import MaterialOne
 from raytracing.ray import Ray
 from raytracing.ray_intersect_object import RayIntersectObject
-from raytracing.shape import Cube, Sphere, Triangle
+from raytracing.shapes.sphere import Sphere
+from raytracing.shapes.cube import Cube
+from raytracing.shapes.triangle import Triangle
 from raytracing.transform import translate, scale
 
 

@@ -1,7 +1,7 @@
 import numpy as np
 
-from .typing import Vec2f, Vec3f
-from .util import normalize
+from ..typing import Vec2f, Vec3f
+from ..util import normalize
 
 
 def uniform_sample_hemisphere(u: Vec2f) -> Vec3f:

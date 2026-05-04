@@ -1,6 +1,8 @@
 import numpy as np
 
-from raytracing.shape import Cube, Sphere, Triangle
+from raytracing.shapes.sphere import Sphere
+from raytracing.shapes.cube import Cube
+from raytracing.shapes.triangle import Triangle
 from raytracing.camera import Camera
 from raytracing.ray_intersect_object import RayIntersectObject
 from raytracing.transform import rotate_Y, rotate_Z, translate, scale

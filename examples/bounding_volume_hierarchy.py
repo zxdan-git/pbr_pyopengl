@@ -2,7 +2,9 @@ from OpenGL import GL as gl
 import glfw
 import raytracing.glutil as glutil
 import raytracing.transform as transform
-from raytracing.shape import Shape, Sphere, Cube
+from raytracing.shape import Shape
+from raytracing.shapes.sphere import Sphere
+from raytracing.shapes.cube import Cube
 from raytracing.ray import Ray
 from raytracing.bounding_box import AABB
 from raytracing.bounding_volume_hierarchy import BVH
@@ -74,10 +76,10 @@ def paint_bbx_in_bvh(index_offset, model_mat_loc):
 def bounding_volume_hierarchy_test(program_id, shapes: List[Shape], text_renderer):
     glutil.show_text(
         text_renderer,
-        "UP: last BVH type",
-        "DOWN: next BVH type",
-        "LEFT: last BVH level",
-        "RIGHT: next BVH level",
+        "LEFT: last BVH type",
+        "RIGHT: next BVH type",
+        "UP: last BVH level",
+        "DOWN: next BVH level",
         "R: rotate the camera",
         "",
         "Current BVH INFO:",

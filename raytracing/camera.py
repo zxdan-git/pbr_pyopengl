@@ -5,7 +5,7 @@ from os import path
 
 from .constants import zero3f
 from .transform import camera_to_world
-from .typing import Vec2u, Vec3f
+from .typing import Vec2u, Vec3f, vec3f, vec2u, array_f
 from .util import normalize
 from .ray import Ray
 
@@ -14,8 +14,8 @@ class Camera:
     def __init__(
         self,
         pos=zero3f(),
-        look_at=np.array([0, 0, -1], dtype=np.float32),
-        up=np.array([0, 1, 0], dtype=np.float32),
+        look_at=vec3f(0, 0, -1),
+        up=vec3f(0, 1, 0),
         fov=60,
         film_width=256,
         film_height=256,
@@ -84,8 +84,8 @@ class Camera:
         self.__reset_film()
 
     @property
-    def film_size(self):
-        return np.array([self.__film_width, self.__film_height], dtype=np.uint32)
+    def film_size(self) -> Vec2u:
+        return vec2u(self.__film_width, self.__film_height)
 
     @film_size.setter
     def film_size(self, new_size: Vec2u):
@@ -100,9 +100,7 @@ class Camera:
         y_in_cam = 1 - 2 * np.float32(
             (i_row + self.__rng.random()) / self.__film_height
         )
-        target = self.__camera_to_world @ np.array(
-            [x_in_cam, y_in_cam, self.__f, 1], dtype=np.float32
-        )
+        target = self.__camera_to_world @ array_f([x_in_cam, y_in_cam, self.__f, 1])
         return Ray(self.__pos, normalize(target[:3] - self.__pos))
 
     def write_to(self, row, col, rgb: Vec3f):

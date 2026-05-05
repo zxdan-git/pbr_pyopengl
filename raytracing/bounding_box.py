@@ -2,6 +2,7 @@ import numpy as np
 
 from .interval import Interval
 from .ray import Ray
+from .typing import Vec3f, vec3f
 
 
 class AABB:
@@ -41,16 +42,13 @@ class AABB:
         self.__inv_y = Interval.union(self.range_y(), Interval(pos[1], pos[1]))
         self.__inv_z = Interval.union(self.range_z(), Interval(pos[2], pos[2]))
 
-    def center(self):
+    def center(self) -> Vec3f:
         if self.empty():
             raise ValueError("Empty bounding box has no center.")
-        return np.array(
-            [
-                self.__inv_x.to_array().mean(),
-                self.__inv_y.to_array().mean(),
-                self.__inv_z.to_array().mean(),
-            ],
-            dtype=np.float32,
+        return vec3f(
+            self.__inv_x.to_array().mean(),
+            self.__inv_y.to_array().mean(),
+            self.__inv_z.to_array().mean(),
         )
 
     def range_x(self):
@@ -84,14 +82,11 @@ class AABB:
 
         return 2 * (len_x * len_y + len_x * len_z + len_y * len_z)
 
-    def offset(self, pos):
-        return np.array(
-            [
-                (pos[0] - self.__inv_x.lower) / self.__inv_x.size(),
-                (pos[1] - self.__inv_y.lower) / self.__inv_y.size(),
-                (pos[2] - self.__inv_z.lower) / self.__inv_z.size(),
-            ],
-            dtype=np.float32,
+    def offset(self, pos) -> Vec3f:
+        return vec3f(
+            (pos[0] - self.__inv_x.lower) / self.__inv_x.size(),
+            (pos[1] - self.__inv_y.lower) / self.__inv_y.size(),
+            (pos[2] - self.__inv_z.lower) / self.__inv_z.size(),
         )
 
     def ray_intersect(self, ray: Ray):

@@ -4,12 +4,12 @@ import numpy as np
 
 from .constants import zero3f
 from .ray import Ray
-from .typing import Vec2f, Vec3f
+from .typing import Vec2f, Vec3f, vec3f
 
 
 class LightSample:
     def __init__(self):
-        self.wo = np.array([0, 0, 1], dtype=np.float32)
+        self.wo = vec3f(0, 0, 1)
         self.pdf = 0
         self.le = zero3f()
 

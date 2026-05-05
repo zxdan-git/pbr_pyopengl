@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..typing import Vec2f, Vec3f
+from ..typing import Vec2f, Vec3f, vec3f
 from ..util import normalize
 
 
@@ -21,7 +21,7 @@ def uniform_sample_hemisphere(u: Vec2f) -> Vec3f:
     cos_theta = u[0]
     sin_theta = np.sqrt(np.max([0, 1 - cos_theta * cos_theta]))
     phi = 2 * np.pi * u[1]
-    return np.array([sin_theta * np.cos(phi), sin_theta * np.sin(phi), cos_theta])
+    return vec3f(sin_theta * np.cos(phi), sin_theta * np.sin(phi), cos_theta)
 
 
 def uniform_hemisphere_pdf() -> np.float32:
@@ -35,9 +35,7 @@ def uniform_sample_sphere(u: Vec2f) -> Vec3f:
     cos_theta = 1 - 2 * u[0]
     sin_theta = np.sqrt(np.max([0, 1 - cos_theta * cos_theta]))
     phi = 2 * np.pi * u[1]
-    return np.array(
-        [sin_theta * np.cos(phi), sin_theta * np.sin(phi), cos_theta], dtype=np.float32
-    )
+    return vec3f(sin_theta * np.cos(phi), sin_theta * np.sin(phi), cos_theta)
 
 
 def uniform_sphere_pdf() -> np.float32:
@@ -60,7 +58,7 @@ def uniform_sample_disk(u: Vec2f) -> Vec3f:
     """
     r = np.sqrt(u[0])
     theta = 2 * np.pi * u[1]
-    return np.array([r * np.cos(theta), r * np.sin(theta), 0], dtype=np.float32)
+    return vec3f(r * np.cos(theta), r * np.sin(theta), 0)
 
 
 def uniform_disk_pdf():
@@ -87,7 +85,7 @@ def concentric_sample_disk(u: Vec2f) -> Vec3f:
     else:
         r = u_offset[1]
         theta = 0.5 * np.pi - 0.25 * np.pi * u_offset[0] / u_offset[1]
-    return np.array([r * np.cos(theta), r * np.sin(theta), 0], dtype=np.float32)
+    return vec3f(r * np.cos(theta), r * np.sin(theta), 0)
 
 
 def cosine_sample_hemisphere(u: Vec2f) -> Vec3f:
@@ -114,7 +112,7 @@ def cosine_sample_hemisphere(u: Vec2f) -> Vec3f:
     disk_sample = uniform_sample_disk(u)
     x, y = disk_sample[0], disk_sample[1]
     z = np.sqrt(np.max([0, 1 - x * x - y * y]))
-    return np.array([x, y, z], dtype=np.float32)
+    return vec3f(x, y, z)
 
 
 def cosine_sample_hemisphere_pdf(p: Vec3f):
@@ -145,9 +143,7 @@ def uniform_sample_direction_in_cone(u: Vec2f, theta_max: np.float32) -> Vec3f:
     cos_theta = 1 - (1 - np.cos(theta_max)) * u[0]
     sin_theta = np.sqrt(np.max([0, 1 - cos_theta * cos_theta]))
     phi = 2 * np.pi * u[1]
-    return np.array(
-        [sin_theta * np.cos(phi), sin_theta * np.sin(phi), cos_theta], dtype=np.float32
-    )
+    return vec3f(sin_theta * np.cos(phi), sin_theta * np.sin(phi), cos_theta)
 
 
 def uniform_sample_cone_pdf(theta_max: np.float32):

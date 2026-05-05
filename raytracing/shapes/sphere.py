@@ -6,7 +6,7 @@ from ..constants import INF
 from ..shape import Shape
 from ..intersection import Intersection
 from ..ray import Ray
-from ..typing import Vec2f, Vec3f
+from ..typing import Vec2f, Vec3f, vec2f, vec3f, array_f, array_u
 from ..util import normalize
 
 from .shape_sample_util import uniform_sample_sphere, uniform_sphere_pdf
@@ -74,7 +74,7 @@ class Sphere(Shape):
     def _get_uv_for_local_pos(self, pos_t: Vec3f) -> Vec2f:
         theta = np.acos(pos_t[1])
         phi = np.atan2(pos_t[0], pos_t[2])
-        return np.array([0.5 + 0.5 * phi / np.pi, theta / np.pi], dtype=np.float32)
+        return vec2f(0.5 + 0.5 * phi / np.pi, theta / np.pi)
 
     def _generate_vertex(self, nu, nv):
         vertex = []
@@ -84,10 +84,8 @@ class Sphere(Shape):
             r = np.sin(theta)
             for j in range(nv + 1):
                 phi = 2 * np.pi * float(j) / nv
-                vertex.append(
-                    np.array([r * np.sin(phi), y, r * np.cos(phi)], dtype=np.float32)
-                )
-        self._vertex = np.array(vertex)
+                vertex.append(vec3f(r * np.sin(phi), y, r * np.cos(phi)))
+        self._vertex = array_f(vertex)
 
     def _generate_face_index(self, nu, nv):
         index = []
@@ -102,7 +100,7 @@ class Sphere(Shape):
                     (i + 1) * n_col + j + 1,
                     i * n_col + j + 1,
                 ]
-        self._face_index = np.array(index, dtype=np.uint32)
+        self._face_index = array_u(index)
 
     def _generate_line_index(self, nu, nv):
         index = []
@@ -115,4 +113,4 @@ class Sphere(Shape):
                     i * n_col + j,
                     (i + 1) * n_col + j,
                 ]
-        self._line_index = np.array(index, dtype=np.uint32)
+        self._line_index = array_u(index)

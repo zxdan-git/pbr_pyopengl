@@ -6,13 +6,13 @@ from ..constants import INF, zero2f, zero3f, ZERO3F
 from ..shape import Shape
 from ..intersection import Intersection
 from ..ray import Ray
-from ..typing import Vec2f
+from ..typing import Vec2f, vec2f, array_f, array_u
 
 
 class Cube(Shape):
     def __init__(self):
         super().__init__()
-        self._vertex = np.array(
+        self._vertex = array_f(
             [
                 # top points
                 [-1, 1, 1],
@@ -24,11 +24,10 @@ class Cube(Shape):
                 [1, -1, 1],
                 [1, -1, -1],
                 [-1, -1, -1],
-            ],
-            dtype=np.float32,
+            ]
         )
 
-        self._face_index = np.array(
+        self._face_index = array_u(
             [
                 # top
                 0,
@@ -72,11 +71,10 @@ class Cube(Shape):
                 3,
                 6,
                 7,
-            ],
-            dtype=np.uint32,
+            ]
         )
 
-        self._line_index = np.array(
+        self._line_index = array_u(
             [
                 # top
                 0,
@@ -132,8 +130,7 @@ class Cube(Shape):
                 7,
                 7,
                 3,
-            ],
-            dtype=np.uint32,
+            ]
         )
         self._bbx = AABB(-1, 1, -1, 1, -1, 1)
 
@@ -168,7 +165,7 @@ class Cube(Shape):
 
         intersection.pos = self.pos_to_world(local_pos)
         intersection.n = self.normal_to_world(local_n)
-        intersection.uv = np.array([remapped_u0, u[1]], dtype=np.float32)
+        intersection.uv = vec2f(remapped_u0, u[1])
         intersection.sample_pdf = 1 / self.area()
         intersection.mat = self.material
         return intersection

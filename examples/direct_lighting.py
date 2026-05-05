@@ -101,8 +101,8 @@ if __name__ == "__main__":
     render(
         camera,
         [bvh],
-        [triangle_light],
+        [spot_light_red, spot_light_green, spot_light_blue],
         DirectRayTracer.SampleStrategy.UNIFORM_SAMPLE_ALL,
-        3,
+        1,
         "sphere light sample all 1 view ray bvh",
     )

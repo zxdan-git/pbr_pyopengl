@@ -1,6 +1,6 @@
 import numpy as np
 
-from .typing import Vec3f, Mat4f
+from .typing import Vec3f, Mat4f, array_f
 from .util import normalize
 
 
@@ -41,7 +41,7 @@ def world_to_camera(pos: Vec3f, look_at: Vec3f, up: Vec3f):
     view_mat[0] = np.append(camera_x, -np.dot(camera_x, pos))
     view_mat[1] = np.append(camera_y, -np.dot(camera_y, pos))
     view_mat[2] = np.append(camera_z, -np.dot(camera_z, pos))
-    view_mat[3] = np.array([0, 0, 0, 1], dtype=np.float32)
+    view_mat[3] = array_f([0, 0, 0, 1])
     return view_mat
 
 
@@ -122,46 +122,37 @@ def perspective(fov: np.float32, aspect: np.float32, near: np.float32, far: np.f
     f = 1 / np.tan(0.5 * fov * np.pi / 180)
     alpha = -(far + near) / (far - near)
     beta = -2 * far * near / (far - near)
-    return np.array(
-        [[f, 0, 0, 0], [0, f * aspect, 0, 0], [0, 0, alpha, beta], [0, 0, -1, 0]],
-        dtype=np.float32,
+    return array_f(
+        [[f, 0, 0, 0], [0, f * aspect, 0, 0], [0, 0, alpha, beta], [0, 0, -1, 0]]
     )
 
 
 def scale(sx: np.float32, sy: np.float32, sz: np.float32):
-    return np.array(
-        [[sx, 0, 0, 0], [0, sy, 0, 0], [0, 0, sz, 0], [0, 0, 0, 1]], dtype=np.float32
-    )
+    return array_f([[sx, 0, 0, 0], [0, sy, 0, 0], [0, 0, sz, 0], [0, 0, 0, 1]])
 
 
 def translate(tx: np.float32, ty: np.float32, tz: np.float32):
     mat = np.identity(4)
-    mat[:3, 3] = np.array([tx, ty, tz], dtype=np.float32)
+    mat[:3, 3] = array_f([tx, ty, tz])
     return mat
 
 
 def rotate_X(angle: np.float32):
     c = np.cos(angle)
     s = np.sin(angle)
-    return np.array(
-        [[1, 0, 0, 0], [0, c, -s, 0], [0, s, c, 0], [0, 0, 0, 1]], dtype=np.float32
-    )
+    return array_f([[1, 0, 0, 0], [0, c, -s, 0], [0, s, c, 0], [0, 0, 0, 1]])
 
 
 def rotate_Y(angle: np.float32):
     c = np.cos(angle)
     s = np.sin(angle)
-    return np.array(
-        [[c, 0, s, 0], [0, 1, 0, 0], [-s, 0, c, 0], [0, 0, 0, 1]], dtype=np.float32
-    )
+    return array_f([[c, 0, s, 0], [0, 1, 0, 0], [-s, 0, c, 0], [0, 0, 0, 1]])
 
 
 def rotate_Z(angle: np.float32):
     c = np.cos(angle)
     s = np.sin(angle)
-    return np.array(
-        [[c, -s, 0, 0], [s, c, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], dtype=np.float32
-    )
+    return array_f([[c, -s, 0, 0], [s, c, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
 
 
 def rotate(axis: Vec3f, angle: np.float32):
@@ -186,7 +177,7 @@ def rotate(axis: Vec3f, angle: np.float32):
     c = np.cos(angle)
     s = np.sin(angle)
     ax, ay, az = axis[0], axis[1], axis[2]
-    return np.array(
+    return array_f(
         [
             [
                 (1 - c) * ax * ax + c,
@@ -207,8 +198,7 @@ def rotate(axis: Vec3f, angle: np.float32):
                 0,
             ],
             [0, 0, 0, 1],
-        ],
-        dtype=np.float32,
+        ]
     )
 
 
@@ -235,12 +225,11 @@ def world_to_local_from_single_dir(dir: Vec3f) -> Mat4f:
 
     # Get the Y axis with cross product.
     y_axis = np.cross(z_axis, x_axis)
-    return np.array(
+    return array_f(
         [
             np.append(x_axis, 0),
             np.append(y_axis, 0),
             np.append(z_axis, 0),
-            np.array([0, 0, 0, 1], dtype=np.float32),
-        ],
-        dtype=np.float32,
+            array_f([0, 0, 0, 1]),
+        ]
     )

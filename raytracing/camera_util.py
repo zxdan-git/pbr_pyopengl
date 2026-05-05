@@ -2,7 +2,7 @@ import numpy as np
 
 from .ray import Ray
 from .transform import camera_to_world
-from .typing import Vec3f
+from .typing import Vec3f, array_f
 from .util import normalize
 
 
@@ -24,14 +24,13 @@ def camera_ray(
     2. Transform the position to world space
     """
     inv_aspect = float(film_height) / film_width
-    target_in_camera = np.array(
+    target_in_camera = array_f(
         [
             float(target_x) / film_width * 2 - 1,
             (float(film_height - target_y) / film_height * 2 - 1) * inv_aspect,
             -1 / np.tan(fov * 0.5 * np.pi / 180),
             1,
-        ],
-        dtype=np.float32,
+        ]
     )
     target_in_world = (
         camera_to_world(camera_pos, camera_center, camera_up) @ target_in_camera

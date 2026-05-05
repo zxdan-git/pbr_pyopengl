@@ -1,7 +1,7 @@
 import numpy as np
 
 from ..light import Light, LightSample
-from ..shape_sample_util import (
+from ..shapes.shape_sample_util import (
     uniform_sample_cone_pdf,
 )
 from ..typing import Vec3f, Vec2f

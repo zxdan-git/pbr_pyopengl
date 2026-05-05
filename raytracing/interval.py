@@ -1,5 +1,7 @@
 import numpy as np
 
+from .typing import Vec2f, vec2f
+
 
 class Interval:
     def __init__(self, lower=np.inf, upper=-np.inf):
@@ -28,5 +30,5 @@ class Interval:
     def empty(self):
         return self.lower > self.upper
 
-    def to_array(self):
-        return np.array([self.lower, self.upper])
+    def to_array(self) -> Vec2f:
+        return vec2f(self.lower, self.upper)

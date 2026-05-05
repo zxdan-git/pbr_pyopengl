@@ -1,7 +1,7 @@
 import numpy as np
 
 from ..bxdf import BxDF, BxDFSample
-from ..typing import Vec2f, Vec3f
+from ..typing import Vec2f, Vec3f, vec3f
 from ..constants import INF, zero3f, one3f
 
 
@@ -29,7 +29,7 @@ class Specular(BxDF):
         integration, so f(wr, wo) = 1 / |cos(theta_r)| here.
         """
         mat_sample = BxDFSample()
-        mat_sample.wi = np.array([-wo[0], -wo[1], wo[2]])
+        mat_sample.wi = vec3f(-wo[0], -wo[1], wo[2])
         mat_sample.pdf = INF  # delta(0)
         mat_sample.f = one3f() / mat_sample.wi[2]
 

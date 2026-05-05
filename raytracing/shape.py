@@ -12,7 +12,7 @@ from .ray import Ray
 from .ray_intersect_object import RayIntersectObject
 from .transform import transform_dir, transform_pos
 from .util import normalize
-from .typing import Vec3f, Vec2f
+from .typing import Vec3f, Vec2f, array_f, array_u
 
 
 class Shape(RayIntersectObject):
@@ -24,8 +24,8 @@ class Shape(RayIntersectObject):
     def __init__(self):
         self._vertex = np.empty((0, 3))
         self.__transformed_vertex = np.empty((0, 3))
-        self._face_index = np.array([], dtype=np.uint32)
-        self._line_index = np.array([], dtype=np.uint32)
+        self._face_index = array_u([])
+        self._line_index = array_u([])
         self._transform = np.identity(4)
         self._inv_transform = np.identity(4)
         self.paint_mode = self.PaintMode.FACE
@@ -61,8 +61,8 @@ class Shape(RayIntersectObject):
             return
         self._transform = new_transform
         self._inv_transform = np.linalg.inv(new_transform)
-        self.__transformed_vertex = np.array(
-            [transform_pos(self.transform, v) for v in self._vertex], dtype=np.float32
+        self.__transformed_vertex = array_f(
+            [transform_pos(self.transform, v) for v in self._vertex]
         )
         self._update_bounding_box()
         self._update_area()

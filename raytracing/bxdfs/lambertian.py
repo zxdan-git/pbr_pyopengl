@@ -2,7 +2,10 @@ import numpy as np
 
 from ..bxdf import BxDF, BxDFSample
 from ..constants import one3f
-from ..shape_sample_util import cosine_sample_hemisphere, cosine_sample_hemisphere_pdf
+from ..shapes.shape_sample_util import (
+    cosine_sample_hemisphere,
+    cosine_sample_hemisphere_pdf,
+)
 from ..typing import Vec2f, Vec3f
 
 

@@ -4,12 +4,12 @@ import numpy as np
 
 from .bxdf import BxDF
 from .constants import zero3f
-from .typing import Vec2f, Vec3f
+from .typing import Vec2f, Vec3f, vec3f
 
 
 class MaterialSample:
     def __init__(self):
-        self.wi = np.array([0, 0, 1], dtype=np.float32)
+        self.wi = vec3f(0, 0, 1)
         self.pdf = 0
         self.f = zero3f()
 

@@ -5,14 +5,14 @@ import numpy as np
 from .constants import zero3f, zero2f
 from .material import Material, MaterialSample
 from .transform import world_to_local_from_single_dir, transform_dir
-from .typing import Vec3f, Vec2f
+from .typing import Vec3f, Vec2f, vec3f
 
 
 class Intersection:
     def __init__(
         self,
         pos: Vec3f = zero3f,
-        n: Vec3f = np.array([0, 1, 0], dtype=np.float32),
+        n: Vec3f = vec3f(0, 1, 0),
         uv: Vec2f = zero2f(),
         mat: Material = None,
         sample_pdf=-1,
@@ -46,7 +46,8 @@ class Intersection:
     def sample_mat(self, wo: Vec3f, u: Vec2f) -> MaterialSample:
         if self.mat is None:
             return MaterialSample()
-        material_sample = self.mat.sample(self.uv, wo, u)
+        local_wo = transform_dir(self.world_to_local, wo)
+        material_sample = self.mat.sample(self.uv, local_wo, u)
         material_sample.wi = transform_dir(self.local_to_world, material_sample.wi)
         return material_sample
 

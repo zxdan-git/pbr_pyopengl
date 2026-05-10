@@ -3,38 +3,38 @@ from typing import List
 
 import numpy as np
 
-from .constants import EPSILON, zero3f, ZERO3F
-from .importance_sampling_util import power_2_heuristic
-from .light import Light, LightSample
-from .material import MaterialSample
-from .ray import Ray
-from .ray_intersect_object import RayIntersectObject
-from .intersection import Intersection
-from .transform import transform_dir
-from .typing import Vec3f
+from ..constants import EPSILON, zero3f, ZERO3F
+from ..importance_sampling_util import power_2_heuristic
+from ..intersection import Intersection
+from ..light import Light
+from ..ray import Ray
+from ..ray_tracer import RayTracer
+from ..scene import Scene
+from ..transform import transform_dir
+from ..typing import Vec3f
 
 
-class DirectRayTracer:
+class DirectRayTracer(RayTracer):
     class SampleStrategy(Enum):
         UNIFORM_SAMPLE_ALL = 1
         UNIFORM_SAMPLE_ONE = 2
 
-    def __init__(self, objects: List[RayIntersectObject], lights: List[Light]):
-        self.objects = objects
-        self.lights = lights
+    def __init__(self, scene: Scene, sample_strategy: SampleStrategy):
+        super().__init__(scene)
+        self.sample_strategy = sample_strategy
 
-    def render(self, view_ray: Ray, sample_strategy: SampleStrategy) -> Vec3f:
-        inter = self.ray_intersect_objects(view_ray)
+    def render(self, view_ray: Ray) -> Vec3f:
+        inter = self.scene.ray_intersect_objects(view_ray)
         if inter is None:
-            return self.light_le(view_ray)
-        if sample_strategy == DirectRayTracer.SampleStrategy.UNIFORM_SAMPLE_ALL:
+            return self.scene.light_le(view_ray)
+        if self.sample_strategy == DirectRayTracer.SampleStrategy.UNIFORM_SAMPLE_ALL:
             lo = zero3f()
-            for light in self.lights:
+            for light in self.scene.lights:
                 lo += self.uniform_sample_light(inter, -view_ray.dir, light)
             return lo
-        elif sample_strategy == DirectRayTracer.SampleStrategy.UNIFORM_SAMPLE_ONE:
-            light = self.lights[np.random.randint(len(self.lights))]
-            return len(self.lights) * self.uniform_sample_light(
+        elif self.sample_strategy == DirectRayTracer.SampleStrategy.UNIFORM_SAMPLE_ONE:
+            light = self.scene.lights[np.random.randint(len(self.lights))]
+            return len(self.scene.lights) * self.uniform_sample_light(
                 inter, -view_ray.dir, light
             )
         return zero3f()
@@ -53,19 +53,19 @@ class DirectRayTracer:
         if not np.allclose(light_sample.le, ZERO3F) and not np.isclose(
             light_sample.pdf, 0
         ):
-            shadow_ray = Ray(
-                intersection.pos + EPSILON * intersection.n, -light_sample.wo
-            )
             local_wi = transform_dir(intersection.world_to_local, -light_sample.wo)
-            cos_i = np.abs(local_wi[2])
+            cos_i = local_wi[2]
             scattering_pdf = intersection.pdf(local_wi, local_wo)
             scattering_f = intersection.f(local_wi, local_wo)
             if (
                 not np.allclose(scattering_f, ZERO3F)
-                and not np.isclose(cos_i, 0)
+                and cos_i > 0
                 and not np.isclose(scattering_pdf, 0)
             ):
-                block = self.ray_intersect_objects(shadow_ray)
+                shadow_ray = Ray(
+                    intersection.pos + EPSILON * intersection.n, -light_sample.wo
+                )
+                block = self.scene.ray_intersect_objects(shadow_ray)
                 if block is None:
                     weight = 1
                     if light.type == Light.Type.AREA:
@@ -83,17 +83,17 @@ class DirectRayTracer:
         # Sample material.
         if light.type == Light.Type.AREA:
             material_sample = intersection.sample_mat(wo, np.random.rand(2))
-            cos_i = np.abs(np.dot(material_sample.wi, intersection.n))
+            cos_i = np.dot(material_sample.wi, intersection.n)
             if (
                 not np.allclose(material_sample.f, ZERO3F)
                 and not np.isclose(material_sample.pdf, 0)
-                and not np.isclose(cos_i, 0)
+                and cos_i > 0
             ):
                 ray = Ray(intersection.pos, material_sample.wi)
                 light_le = light.le(ray)
                 light_pdf = light.pdf(intersection.pos, material_sample.wi)
                 if not np.allclose(light_le, ZERO3F) and not np.isclose(light_pdf, 0):
-                    block = self.ray_intersect_objects(ray)
+                    block = self.scene.ray_intersect_objects(ray)
                     if block is None:
                         weight = power_2_heuristic(1, material_sample.pdf, 1, light_pdf)
                         lo += (
@@ -105,19 +105,3 @@ class DirectRayTracer:
                         )
 
         return lo
-
-    def ray_intersect_objects(self, ray: Ray) -> Intersection:
-        inter = None
-        for object in self.objects:
-            inter_i = object.ray_intersect(ray)
-            if not inter_i is None:
-                inter = inter_i
-        return inter
-
-    def light_le(self, view_ray: Ray):
-        le = zero3f()
-        for light in self.lights:
-            if light.is_delta():
-                continue
-            le += light.le(view_ray)
-        return le

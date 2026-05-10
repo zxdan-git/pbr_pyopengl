@@ -1,7 +1,7 @@
 import numpy as np
 
 from ..bxdf import BxDF, BxDFSample
-from ..constants import one3f
+from ..constants import one3f, zero3f
 from ..shapes.shape_sample_util import (
     cosine_sample_hemisphere,
     cosine_sample_hemisphere_pdf,
@@ -23,4 +23,6 @@ class Lambertain(BxDF):
         return cosine_sample_hemisphere_pdf(wi)
 
     def f(self, wi: Vec3f, wo: Vec3f) -> Vec3f:
+        if wi[2] * wo[2] < 0:
+            return zero3f()
         return one3f() / np.pi

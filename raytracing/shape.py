@@ -5,9 +5,11 @@ from typing import Tuple
 import numpy as np
 
 from .bounding_box import AABB
+from .bxdfs.lambertian import Lambertain
 from .constants import INF
 from .intersection import Intersection
 from .material import Material
+from .materials.material_one import MaterialOne
 from .ray import Ray
 from .ray_intersect_object import RayIntersectObject
 from .transform import transform_dir, transform_pos
@@ -24,14 +26,16 @@ class Shape(RayIntersectObject):
     def __init__(self):
         self._vertex = np.empty((0, 3))
         self.__transformed_vertex = np.empty((0, 3))
+        self._tex_coord = np.empty((0, 2))
         self._face_index = array_u([])
         self._line_index = array_u([])
+        self._tex_index = array_u([])
         self._transform = np.identity(4)
         self._inv_transform = np.identity(4)
         self.paint_mode = self.PaintMode.FACE
         self._bbx = AABB()
         self._area = -1
-        self.material: Material = None
+        self.material: Material = MaterialOne(Lambertain())
 
     @property
     def vertex(self):
@@ -44,12 +48,20 @@ class Shape(RayIntersectObject):
         return self.__transformed_vertex
 
     @property
+    def tex_coord(self):
+        return self._tex_coord
+
+    @property
     def face_index(self):
         return self._face_index
 
     @property
     def line_index(self):
         return self._line_index
+
+    @property
+    def tex_index(self):
+        return self._tex_index
 
     @property
     def transform(self):
@@ -66,6 +78,7 @@ class Shape(RayIntersectObject):
         )
         self._update_bounding_box()
         self._update_area()
+        self._on_transform_updated()
 
     @property
     def bounding_box(self):
@@ -142,3 +155,6 @@ class Shape(RayIntersectObject):
     @abstractmethod
     def _ray_intersect(self, ray: Ray) -> Tuple[np.float32, Intersection]:
         return INF, None
+
+    def _on_transform_updated(self):
+        pass

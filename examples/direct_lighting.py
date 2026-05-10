@@ -1,56 +1,19 @@
 import numpy as np
-from typing import List
 
 from raytracing.bounding_volume_hierarchy import BVH
 from raytracing.camera import Camera
-from raytracing.direct_ray_tracer import DirectRayTracer
+from raytracing.ray_tracers.direct_ray_tracer import DirectRayTracer
 from raytracing.lights.area_light import AreaLight
 from raytracing.lights.point_light import PointLight
 from raytracing.lights.spot_light import SpotLight
-from raytracing.light import Light
 from raytracing.bxdfs.lambertian import Lambertain
 from raytracing.materials.material_one import MaterialOne
-from raytracing.ray import Ray
-from raytracing.ray_intersect_object import RayIntersectObject
+from raytracing.render_util import render
+from raytracing.scene import Scene
 from raytracing.shapes.sphere import Sphere
 from raytracing.shapes.cube import Cube
 from raytracing.shapes.triangle import Triangle
 from raytracing.transform import translate, scale
-
-
-def render(
-    camera: Camera,
-    objects: List[RayIntersectObject],
-    lights: List[Light],
-    sample_strategy: DirectRayTracer.SampleStrategy,
-    n_view_ray=1,
-    name="direct light",
-):
-    direct_ray_tracer = DirectRayTracer(objects, lights)
-    total_pixels = camera.film_height * camera.film_width
-    processed_n = 0
-    for row_i in range(camera.film_height):
-        for col_i in range(camera.film_width):
-            rgb = np.zeros(3)
-            for _ in range(n_view_ray):
-                rgb += (
-                    direct_ray_tracer.render(
-                        view_ray=camera.generate_view_ray_from(row_i, col_i),
-                        sample_strategy=sample_strategy,
-                    )
-                    / n_view_ray
-                )
-            camera.write_to(row_i, col_i, rgb)
-            processed_n += 1
-            print(
-                "\rProgress %d%%" % (processed_n * 100 // total_pixels),
-                end="",
-                flush=True,
-            )
-    print("")
-    camera.save_film("pics", name)
-    camera.show_film()
-
 
 if __name__ == "__main__":
     camera = Camera(pos=np.array([0, 5, 5]), look_at=np.array([0, 3, 0]))
@@ -97,12 +60,17 @@ if __name__ == "__main__":
         ),
     )
     triangle_light.n_samples = 3
-    bvh = BVH(BVH.Type.MID_POINT, [sphere, cube, triangle])
-    render(
+    scene = Scene(
         camera,
-        [bvh],
+        [sphere, cube, triangle],
         [spot_light_red, spot_light_green, spot_light_blue],
-        DirectRayTracer.SampleStrategy.UNIFORM_SAMPLE_ALL,
+    )
+    scene.setup_bvh(BVH.Type.SAH)
+    direct_ray_tracer = DirectRayTracer(
+        scene, DirectRayTracer.SampleStrategy.UNIFORM_SAMPLE_ALL
+    )
+    render(
+        direct_ray_tracer,
         1,
         "sphere light sample all 1 view ray bvh",
     )

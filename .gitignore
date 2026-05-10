@@ -19,3 +19,6 @@ build/
 
 # Output results
 pics/*
+
+# Models
+models/*

@@ -27,6 +27,8 @@ class Cube(Shape):
             ]
         )
 
+        self._tex_coord = array_f([[0, 0], [1, 0], [1, 1], [0, 1]])
+
         self._face_index = array_u(
             [
                 # top
@@ -74,6 +76,53 @@ class Cube(Shape):
             ]
         )
 
+        self._tex_index = array_u(
+            [
+                # top
+                0,
+                1,
+                2,
+                0,
+                2,
+                3,
+                # bottom
+                0,
+                2,
+                1,
+                0,
+                3,
+                2,
+                # left
+                2,
+                3,
+                1,
+                1,
+                3,
+                0,
+                # right
+                3,
+                0,
+                2,
+                2,
+                0,
+                1,
+                # front
+                3,
+                1,
+                2,
+                3,
+                0,
+                1,
+                # back
+                2,
+                3,
+                0,
+                2,
+                0,
+                1,
+            ]
+        )
+
         self._line_index = array_u(
             [
                 # top
@@ -94,42 +143,15 @@ class Cube(Shape):
                 7,
                 7,
                 4,
-                # left
+                # around
                 0,
                 4,
-                4,
-                7,
-                7,
-                3,
-                3,
-                0,
-                # right
                 1,
                 5,
-                5,
-                6,
-                6,
                 2,
-                2,
-                1,
-                # front
-                0,
-                1,
-                1,
-                5,
-                5,
-                4,
-                4,
-                0,
-                # back
+                6,
                 3,
-                2,
-                2,
-                6,
-                6,
                 7,
-                7,
-                3,
             ]
         )
         self._bbx = AABB(-1, 1, -1, 1, -1, 1)

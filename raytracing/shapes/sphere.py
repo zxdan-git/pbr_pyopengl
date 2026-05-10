@@ -6,7 +6,7 @@ from ..constants import INF
 from ..shape import Shape
 from ..intersection import Intersection
 from ..ray import Ray
-from ..typing import Vec2f, Vec3f, vec2f, vec3f, array_f, array_u
+from ..typing import Array_u, Vec2f, Vec3f, vec2f, vec3f, array_f, array_u
 from ..util import normalize
 
 from .shape_sample_util import uniform_sample_sphere, uniform_sphere_pdf
@@ -16,7 +16,9 @@ class Sphere(Shape):
     def __init__(self, nu, nv):
         super().__init__()
         self._generate_vertex(nu, nv)
-        self._generate_face_index(nu, nv)
+        self._generate_tex_coord(nu, nv)
+        self._face_index = self._generate_face_index(nu, nv)
+        self._tex_index = self._generate_face_index(nu, nv)
         self._generate_line_index(nu, nv)
         self._bbx = AABB(-1, 1, -1, 1, -1, 1)
 
@@ -87,7 +89,14 @@ class Sphere(Shape):
                 vertex.append(vec3f(r * np.sin(phi), y, r * np.cos(phi)))
         self._vertex = array_f(vertex)
 
-    def _generate_face_index(self, nu, nv):
+    def _generate_tex_coord(self, nu, nv):
+        tex_coord = []
+        for i in range(nu + 1):
+            for j in range(nv + 1):
+                tex_coord.append(vec2f(float(i) / nu, float(j) / nv))
+        self._tex_coord = array_f(tex_coord)
+
+    def _generate_face_index(self, nu, nv) -> Array_u:
         index = []
         n_col = nv + 1
         for i in range(nu):
@@ -100,7 +109,7 @@ class Sphere(Shape):
                     (i + 1) * n_col + j + 1,
                     i * n_col + j + 1,
                 ]
-        self._face_index = array_u(index)
+        return array_u(index)
 
     def _generate_line_index(self, nu, nv):
         index = []

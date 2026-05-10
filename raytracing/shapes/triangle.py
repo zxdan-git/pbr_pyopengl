@@ -29,6 +29,7 @@ class Triangle(Shape):
         else:
             self._tex_coord = self._get_default_tex_coord()
         self._face_index = array_u([0, 1, 2])
+        self._tex_index = array_u([0, 1, 2])
         self._line_index = array_u([0, 1, 1, 2, 2, 0])
         for v in [v0, v1, v2]:
             self._bbx.embrace(v)

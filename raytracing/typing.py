@@ -11,6 +11,10 @@ Vec3f = Annotated[NDArray[np.float32], "shape: (3,)"]
 
 Mat4f = Annotated[NDArray[np.float32], "shape: (4, 4)"]
 
+Array_f = NDArray[np.float32]
+
+Array_u = NDArray[np.uint32]
+
 
 def vec2u(u, v) -> Vec2u:
     return np.array([u, v], dtype=np.uint32)

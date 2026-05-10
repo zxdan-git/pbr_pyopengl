@@ -1,10 +1,16 @@
 import numpy as np
 
 from raytracing.bounding_volume_hierarchy import BVH
+<<<<<<< HEAD
 from raytracing.bxdfs.lambertian import Lambertain
 from raytracing.camera import Camera
 from raytracing.lights.point_light import PointLight
 from raytracing.materials.material_one import MaterialOne
+=======
+from raytracing.camera import Camera
+from raytracing.lights.point_light import PointLight
+from raytracing.lights.spot_light import SpotLight
+>>>>>>> 3e0d691 (create triangle mesh)
 from raytracing.shapes.cube import Cube
 from raytracing.shapes.sphere import Sphere
 from raytracing.shapes.triangle_mesh import TriangleMesh
@@ -15,12 +21,27 @@ from raytracing.transform import translate, scale
 
 if __name__ == "__main__":
     camera = Camera(pos=np.array([5, 5, 5]), look_at=np.array([0, 0, 0]))
+<<<<<<< HEAD
     point_light = PointLight(intensity=np.ones(3) * 200, pos=np.array([5, 5, 5]))
+=======
+    point_light = PointLight(intensity=np.ones(3) * 200, pos=np.array([8, 8, 8]))
+    spot_light = SpotLight(
+        intensity=np.ones(3) * 100,
+        pos=np.array([0, 10, 0]),
+        dir=np.array([0, -1, 0]),
+        theta_max=np.pi / 4,
+        theta_decay=np.pi / 6,
+    )
+>>>>>>> 3e0d691 (create triangle mesh)
 
     sphere = Sphere(10, 10)
     sphere.transform = translate(0, 2, 0)
     cube = Cube()
+<<<<<<< HEAD
     cube.transform = scale(3, 0.5, 3)
+=======
+    cube.transform = scale(5, 0.5, 5)
+>>>>>>> 3e0d691 (create triangle mesh)
 
     sphere_mesh = TriangleMesh(
         sphere.vertex, sphere.tex_coord, sphere.face_index, sphere.tex_index
@@ -32,6 +53,7 @@ if __name__ == "__main__":
     )
     cube_mesh.transform = scale(3, 0.5, 3)
 
+<<<<<<< HEAD
     obj_mesh = TriangleMesh.create_mesh_from_obj("models/model.obj")
     obj_mesh.transform = scale(0.5, 0.5, 0.5)
 
@@ -39,6 +61,15 @@ if __name__ == "__main__":
         camera,
         [obj_mesh],
         [point_light],
+=======
+    obj_mesh = TriangleMesh.create_mesh_from_obj("models/bunny.obj")
+    obj_mesh.transform = translate(0, 1, 0) @ scale(15, 15, 15)
+
+    scene = Scene(
+        camera,
+        [obj_mesh, cube],
+        [spot_light],
+>>>>>>> 3e0d691 (create triangle mesh)
     )
     scene.setup_bvh(BVH.Type.SAH)
     direct_ray_tracer = DirectRayTracer(
@@ -47,5 +78,9 @@ if __name__ == "__main__":
     render(
         direct_ray_tracer,
         1,
+<<<<<<< HEAD
         "obj mesh point light sample all 1 view ray bvh",
+=======
+        "obj mesh spot light sample all 1 view ray bvh",
+>>>>>>> 3e0d691 (create triangle mesh)
     )

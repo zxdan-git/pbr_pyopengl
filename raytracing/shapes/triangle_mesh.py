@@ -141,7 +141,16 @@ class TriangleMesh(Shape):
                         index_data = index.split("/")
                         if len(index_data) == 3:
                             face_index.append(int(index_data[0]) - 1)
+<<<<<<< HEAD
                             tex_index.append(int(index_data[2]) - 1)
+=======
+                            if index_data[1] == "":
+                                tex_index.append(0)
+                            else:
+                                tex_index.append(int(index_data[1]) - 1)
+            if len(tex_coord) == 0:
+                tex_coord.append(vec2f(0, 0))
+>>>>>>> 3e0d691 (create triangle mesh)
             return TriangleMesh(
                 array_f(vertex),
                 array_f(tex_coord),

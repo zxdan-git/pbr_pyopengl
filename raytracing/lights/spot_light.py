@@ -45,4 +45,5 @@ class SpotLight(Light):
         light_sample.le = weight * self.__intensity / dist_len / dist_len
         light_sample.pdf = uniform_sample_cone_pdf(self.__theta_max)
         light_sample.wo = dist_dir
+        light_sample.t = dist_len
         return light_sample

@@ -1,6 +1,7 @@
 import numpy as np
 
-from .typing import Vec3f, Mat4f, array_f
+from .constants import ZERO3F, zero3f
+from .typing import Vec3f, Mat4f, array_f, vec3f
 from .util import normalize
 
 
@@ -69,7 +70,16 @@ def camera_to_world(pos: Vec3f, look_at: Vec3f, up: Vec3f):
     """
     view_mat = np.zeros((4, 4), dtype=np.float32)
     view_z = normalize(pos - look_at)
-    view_x = normalize(np.cross(normalize(up), view_z))
+    norm_up = normalize(up)
+    view_x = vec3f(1, 0, 0)
+    if np.isclose(np.abs(np.dot(norm_up, view_z)), 1):
+        min_i = np.argmin(np.abs(view_z))
+        view_x[min_i] = 0
+        view_x[(min_i + 1) % 3] = -view_z[(min_i + 2) % 3]
+        view_x[(min_i + 2) % 3] = view_z[(min_i + 1) % 3]
+        view_x = normalize(view_x)
+    else:
+        view_x = normalize(np.cross(norm_up, view_z))
     view_y = normalize(np.cross(view_z, view_x))
     view_mat[:3, 0] = view_x
     view_mat[:3, 1] = view_y
@@ -217,7 +227,7 @@ def world_to_local_from_single_dir(dir: Vec3f) -> Mat4f:
     # smallest absolute value of Z axis to be 0, because Z is not zero, so it
     # guarantees that the other two dimension cannot both be 0.
     min_dim = np.argmin(np.abs(z_axis))
-    x_axis = np.zeros(3, dtype=np.float32)
+    x_axis = zero3f()
     x_axis[min_dim] = 0
     x_axis[(min_dim + 1) % 3] = z_axis[(min_dim + 2) % 3]
     x_axis[(min_dim + 2) % 3] = -z_axis[(min_dim + 1) % 3]

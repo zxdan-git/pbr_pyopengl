@@ -2,14 +2,15 @@ import numpy as np
 from typing import List
 
 from .build_node import BuildNode
-from ..bounding_box import AABB
 from .morton_code_util import (
     MortonObject,
     generate_morton_objects_from_intersect_objects,
 )
 from .partition_util import sah_partition_on_target_aixs
-from ..ray_intersect_object import RayIntersectObject
 from .recursive_build import build_by_axis_spread, build_by_sorted_morton
+
+from ..bounding_box import AABB
+from ..ray_intersect_object import RayIntersectObject
 from ..util import radix_sort_binary
 
 

@@ -4,10 +4,10 @@ from .constants import INF
 
 
 class Ray:
-    def __init__(self, pos, dir):
+    def __init__(self, pos, dir, t=INF):
         self.pos = pos
         self.dir = dir
-        self.t_max = INF
+        self.t_max = t
 
     @staticmethod
     def transform(ray, transform_mat):

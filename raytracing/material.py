@@ -10,6 +10,7 @@ from .typing import Vec2f, Vec3f, vec3f
 class MaterialSample:
     def __init__(self):
         self.wi = vec3f(0, 0, 1)
+        self.local_wi = vec3f(0, 0, 1)
         self.pdf = 0
         self.f = zero3f()
 
@@ -17,6 +18,11 @@ class MaterialSample:
 class Material(ABC):
     def __init__(self):
         self.bxdfs: List[BxDF] = []
+
+    def copy(self):
+        material = self.__class__.__new__(self.__class__)
+        material.bxdfs = [bxdf.copy() for bxdf in self.bxdfs]
+        return material
 
     @abstractmethod
     def sample(self, uv: Vec2f, wo: Vec3f, u: Vec2f) -> MaterialSample:

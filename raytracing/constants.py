@@ -16,3 +16,19 @@ def zero2f():
 
 def one3f():
     return np.ones(3, dtype=np.float32)
+
+
+def red():
+    return np.array([1, 0, 0], dtype=np.float32)
+
+
+def green():
+    return np.array([0, 1, 0], dtype=np.float32)
+
+
+def blue():
+    return np.array([0, 0, 1], dtype=np.float32)
+
+
+def white():
+    return np.array([1, 1, 1], dtype=np.float32)

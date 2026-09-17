@@ -25,7 +25,7 @@ class Shape(RayIntersectObject):
 
     def __init__(self):
         self._vertex = np.empty((0, 3))
-        self.__transformed_vertex = np.empty((0, 3))
+        self._transformed_vertex = np.empty((0, 3))
         self._tex_coord = np.empty((0, 2))
         self._face_index = array_u([])
         self._line_index = array_u([])
@@ -37,15 +37,31 @@ class Shape(RayIntersectObject):
         self._area = -1
         self.material: Material = MaterialOne(Lambertain())
 
+    def copy(self):
+        shape = self.__class__.__new__(self.__class__)
+        shape._vertex = self._vertex.copy()
+        shape._transformed_vertex = self._transformed_vertex.copy()
+        shape._tex_coord = self._tex_coord.copy()
+        shape._face_index = self._face_index.copy()
+        shape._line_index = self._line_index.copy()
+        shape._tex_index = self._tex_index.copy()
+        shape._transform = self._transform.copy()
+        shape._inv_transform = self._inv_transform.copy()
+        shape.paint_mode = self.paint_mode
+        shape._bbx = self._bbx.copy()
+        shape._area = self._area
+        shape.material = self.material.copy()
+        return shape
+
     @property
     def vertex(self):
         return self._vertex
 
     @property
     def transformed_vertex(self):
-        if self.__transformed_vertex.shape[0] == 0:
-            self.__transformed_vertex = self._vertex.copy()
-        return self.__transformed_vertex
+        if self._transformed_vertex.shape[0] == 0:
+            self._transformed_vertex = self._vertex.copy()
+        return self._transformed_vertex
 
     @property
     def tex_coord(self):
@@ -73,7 +89,7 @@ class Shape(RayIntersectObject):
             return
         self._transform = new_transform
         self._inv_transform = np.linalg.inv(new_transform)
-        self.__transformed_vertex = array_f(
+        self._transformed_vertex = array_f(
             [transform_pos(self.transform, v) for v in self._vertex]
         )
         self._update_bounding_box()
@@ -110,7 +126,7 @@ class Shape(RayIntersectObject):
     def sample_for_target(self, target: Vec3f, u: Vec2f) -> Intersection:
         return self.sample(u)
 
-    def sample_pdf(self, intersection: Intersection):
+    def sample_pdf(self):
         return 1 / self.area()
 
     def sample_pdf_for_target(self, target: Vec3f, dir: Vec3f):

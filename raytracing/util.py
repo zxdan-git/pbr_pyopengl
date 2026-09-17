@@ -1,5 +1,7 @@
 import numpy as np
 
+from .typing import Vec3f, array_f
+
 
 def normalize(v):
     norm = np.linalg.norm(v)
@@ -132,3 +134,8 @@ def search_interval(sorted_values, pivot, start, end, value_func=lambda value: v
         else:
             return mid
     return -1
+
+
+def rgb_to_luminance(rgb: Vec3f) -> float:
+    # Rec.709/sRGB luminance weights for linear RGB.
+    return float(np.dot(rgb, array_f([0.2126, 0.7152, 0.0722])))

@@ -1,10 +1,11 @@
 import numpy as np
 from typing import List, Callable
 
-from ..bounding_box import AABB
 from .build_node import BuildNode
-from ..interval import Interval
 from .morton_code_util import MortonObject, partition_on_sorted_morton
+
+from ..bounding_box import AABB
+from ..interval import Interval
 from ..ray_intersect_object import RayIntersectObject
 
 

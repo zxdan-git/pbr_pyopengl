@@ -120,6 +120,21 @@ class TriangleMesh(Shape):
         )
         self._area_distribution = Distribution1D([obj.area for obj in self._objects])
 
+    def copy(self):
+        mesh = super().copy()
+        mesh._objects = [
+            TriangleObject(
+                mesh,
+                array_u([obj.v_idx_1, obj.v_idx_2, obj.v_idx_3]),
+                array_u([obj.t_idx_1, obj.t_idx_2, obj.t_idx_3]),
+            )
+            for obj in self._objects
+        ]
+        mesh._bvh_type = self._bvh_type
+        mesh._bvh = self._bvh.copy_to(mesh._objects)
+        mesh._area_distribution = self._area_distribution.copy()
+        return mesh
+
     @staticmethod
     def create_mesh_from_obj(obj_path: str, bvh_type: BVH.Type = BVH.Type.SAH):
         if Path(obj_path).suffix.lower() != ".obj":

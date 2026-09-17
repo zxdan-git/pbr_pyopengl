@@ -188,7 +188,7 @@ class Cube(Shape):
         intersection.pos = self.pos_to_world(local_pos)
         intersection.n = self.normal_to_world(local_n)
         intersection.uv = vec2f(remapped_u0, u[1])
-        intersection.sample_pdf = 1 / self.area()
+        intersection.sample_pdf = 1 / self.area
         intersection.mat = self.material
         return intersection
 

@@ -13,21 +13,26 @@ class Specular(BxDF):
         According to the property of perfect specular, the only possible
         incident direction is the reflected direction. We could use delta
         function to make integral concentrate on the reflected direction:
-        f(wi, wo) = g(wi, wo) \delta(wi - wr) where wr = reflected(wo)
+        f(w_i, w_o) = g(w_i, w_o) \\delta(w_i - w_r) where w_r = reflected(w_o).
 
         Since it is a perfect specular BxDF, no energy loses except the part
         aborbed by the BxDF.
 
-        Lo = \int f(wi, wo) Li(wi) |cos(theta_i)| dwi
-           = \int g(wi, wo) \delta(wi - wr) Li(wi) |cos(theta_i)| dwi
-           = g(wr, wo) |cos(theta_r)| Li(wr) = L(wr)
+        dPhi_i = \\int\\int Li |cos(theta_i)| dw_i dA
+        dPhi_o
+            = \\int\\int\\int f(w_i, w_o) |cos(theta_i)cos(theta_o)| dw_i dw_o
+                dA
+            = \\int\\int\\int g(w_i, w_o) \\delta(wi - wr) |cos(theta_i)
+                cos(theta_o)| dw_i dw_o dA
+            = \\int\\int g(w_i, w_r) |cos(theta_i)cos(theta_r)| dw_i dw_o dA
 
-        g(wr, wo) = 1 / |cos(theta_r)|
-        f(wr, wo) = \delta(0) / |cos(theta_r)|
+        dPhi_o = Fr * dPhi_i, where Fr is the Fresnel factor which will be estimated by the Material.
+        g(w_i, w_r) = Fr  / |cos(theta_r)|
 
-        Note, \delta(0) is infinity but will be cancelled during Monte Carlo
+        Note, \\delta(0) is infinity but will be cancelled during Monte Carlo
         integration, so f(wr, wo) = 1 / |cos(theta_r)| here.
         """
+
         mat_sample = BxDFSample()
         mat_sample.wi = vec3f(-wo[0], -wo[1], wo[2])
         mat_sample.pdf = INF  # delta(0)

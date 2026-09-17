@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 import numpy as np
 
-from .constants import zero3f
+from .constants import zero3f, INF
 from .ray import Ray
 from .typing import Vec2f, Vec3f, vec3f
 
@@ -12,6 +12,7 @@ class LightSample:
         self.wo = vec3f(0, 0, 1)
         self.pdf = 0
         self.le = zero3f()
+        self.t = INF
 
 
 class Light(ABC):
@@ -28,11 +29,8 @@ class Light(ABC):
     def sample(self, target: Vec3f, u: Vec2f) -> LightSample:
         return LightSample()
 
-    def pdf(self, target: Vec3f, wi: Vec3f) -> np.float32:
-        return 0
-
-    def le(self, ray: Ray) -> Vec3f:
-        return zero3f()
+    def get_sample(self, ray: Ray) -> LightSample:
+        return LightSample()
 
     def is_delta(self) -> bool:
         return self.type == Light.Type.DELTA_AREA or self.type == Light.Type.DELTA_DIR

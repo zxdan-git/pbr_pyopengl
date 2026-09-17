@@ -15,6 +15,12 @@ class Distribution1D:
         for i in range(len(self.cdfs)):
             self.cdfs[i] /= self.values_int
 
+    def copy(self):
+        dist = self.__class__.__new__(self.__class__)
+        dist.values_num = self.values_num
+        dist.cdfs = self.cdfs.copy()
+        dist.values_int = self.values_int
+
     def sample(self, u: np.float32):
         sample_idx = search_interval(self.cdfs, u, 0, self.values_num)
         if sample_idx < 0 or sample_idx >= self.values_num:

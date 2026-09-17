@@ -17,4 +17,5 @@ class PointLight(Light):
         light_sample.wo = dist / dist_len
         light_sample.pdf = 1
         light_sample.le = self.__intensity / (dist_len * dist_len)
+        light_sample.t = dist_len
         return light_sample

@@ -1,6 +1,8 @@
 import numpy as np
 from typing import Tuple
 
+from .shape_sample_util import uniform_sample_triangle
+
 from ..bounding_box import AABB
 from ..constants import INF
 from ..shape import Shape
@@ -8,8 +10,6 @@ from ..intersection import Intersection
 from ..ray import Ray
 from ..typing import Vec2f, Vec3f, vec2f, array_f, array_u, zeros_f
 from ..util import normalize, det3x3
-
-from .shape_sample_util import uniform_sample_triangle
 
 
 class Triangle(Shape):

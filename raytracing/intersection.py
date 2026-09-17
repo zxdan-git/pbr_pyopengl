@@ -2,8 +2,9 @@ from typing import List
 
 import numpy as np
 
-from .constants import zero3f, zero2f
+from .constants import EPSILON, INF, zero3f, zero2f
 from .material import Material, MaterialSample
+from .ray import Ray
 from .transform import world_to_local_from_single_dir, transform_dir
 from .typing import Vec3f, Vec2f, vec3f
 
@@ -35,28 +36,41 @@ class Intersection:
         self.__world_to_local = world_to_local_from_single_dir(self.n)
         self.__local_to_world = np.transpose(self.__world_to_local)
 
-    @property
-    def world_to_local(self):
-        return self.__world_to_local.copy()
-
-    @property
-    def local_to_world(self):
-        return self.__local_to_world.copy()
-
     def sample_mat(self, wo: Vec3f, u: Vec2f) -> MaterialSample:
         if self.mat is None:
             return MaterialSample()
-        local_wo = transform_dir(self.world_to_local, wo)
+        local_wo = self._world_to_local_dir(wo)
         material_sample = self.mat.sample(self.uv, local_wo, u)
-        material_sample.wi = transform_dir(self.local_to_world, material_sample.wi)
+        material_sample.wi = self._local_to_world_dir(material_sample.local_wi)
         return material_sample
 
-    def pdf(self, wi: Vec3f, wo: Vec3f):
+    def get_mat_sample(self, wi: Vec3f, wo: Vec3f) -> MaterialSample:
+        mat_sample = MaterialSample()
+        mat_sample.wi = wi
+        mat_sample.local_wi = self._world_to_local_dir(wi)
+        local_wo = self._world_to_local_dir(wo)
+        mat_sample.f = self._f(mat_sample.local_wi, local_wo)
+        mat_sample.pdf = self._pdf(mat_sample.local_wi, local_wo)
+        return mat_sample
+
+    def shoot_ray(self, dir, t=INF) -> Ray:
+        out = 1
+        if np.dot(dir, self.n) < 0:
+            out = -1
+        return Ray(self.pos + out * EPSILON * self.n, dir, t)
+
+    def _pdf(self, local_wi: Vec3f, local_wo: Vec3f):
         if self.mat is None:
             return 0
-        return self.mat.pdf(self.uv, wi, wo)
+        return self.mat.pdf(self.uv, local_wi, local_wo)
 
-    def f(self, wi: Vec3f, wo: Vec3f):
+    def _f(self, local_wi: Vec3f, local_wo: Vec3f):
         if self.mat is None:
             return zero3f()
-        return self.mat.f(self.uv, wi, wo)
+        return self.mat.f(self.uv, local_wi, local_wo)
+
+    def _world_to_local_dir(self, dir):
+        return transform_dir(self.__world_to_local, dir)
+
+    def _local_to_world_dir(self, dir):
+        return transform_dir(self.__local_to_world, dir)

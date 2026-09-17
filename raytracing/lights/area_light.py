@@ -33,13 +33,15 @@ class AreaLight(Light):
         if np.dot(light_sample.wo, intersection.n) <= 0:
             light_sample.le = 0
         light_sample.pdf = self.pdf(target, -light_sample.wo)
+        light_sample.t = dist_len
         return light_sample
 
-    def pdf(self, target: Vec3f, wi: Vec3f) -> np.float32:
-        return self.__shape.sample_pdf_for_target(target, wi)
-
-    def le(self, ray: Ray) -> Vec3f:
+    def get_sample(self, ray) -> LightSample:
+        light_sample = LightSample()
         intersection = self.__shape.ray_intersect(ray)
         if intersection is None:
-            return zero3f()
-        return self.__intensity
+            return light_sample
+        light_sample.le = self.__intensity
+        light_sample.pdf = self.__shape.sample_pdf_for_target(ray.pos, ray.dir)
+        light_sample.wo = -ray.dir
+        light_sample.t = ray.t_max

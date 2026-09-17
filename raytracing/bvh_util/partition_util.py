@@ -1,10 +1,11 @@
 import numpy as np
 from typing import List
 
+from .surface_area_heuristic_util import BucketInfo, min_sah_partition
+
 from ..bounding_box import AABB
 from ..interval import Interval
 from ..ray_intersect_object import RayIntersectObject
-from .surface_area_heuristic_util import BucketInfo, min_sah_partition
 from ..util import partition, partition_cmp, nth_element
 
 

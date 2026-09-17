@@ -19,6 +19,13 @@ class AABB:
         self.__inv_y = Interval(y_min, y_max)
         self.__inv_z = Interval(z_min, z_max)
 
+    def copy(self):
+        bbx = self.__class__.__new__(self.__class__)
+        bbx.__inv_x = Interval(self.range_x().lower, self.range_x().upper)
+        bbx.__inv_y = Interval(self.range_y().lower, self.range_y().upper)
+        bbx.__inv_z = Interval(self.range_z().lower, self.range_z().upper)
+        return bbx
+
     @staticmethod
     def union(bbx_1, bbx_2):
         inv_x = Interval.union(bbx_1.range_x(), bbx_2.range_x())

@@ -13,6 +13,9 @@ class BxDFSample:
 
 
 class BxDF(ABC):
+    def copy(self):
+        return self.__class__.__new__(self.__class__)
+
     @abstractmethod
     def sample(self, wo: Vec3f, u: Vec2f) -> BxDFSample:
         return BxDFSample()

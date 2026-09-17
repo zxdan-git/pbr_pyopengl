@@ -1,6 +1,8 @@
 import numpy as np
 from typing import Tuple
 
+from .shape_sample_util import uniform_sample_sphere, uniform_sphere_pdf
+
 from ..bounding_box import AABB
 from ..constants import INF
 from ..shape import Shape
@@ -8,8 +10,6 @@ from ..intersection import Intersection
 from ..ray import Ray
 from ..typing import Array_u, Vec2f, Vec3f, vec2f, vec3f, array_f, array_u
 from ..util import normalize
-
-from .shape_sample_util import uniform_sample_sphere, uniform_sphere_pdf
 
 
 class Sphere(Shape):
@@ -28,7 +28,7 @@ class Sphere(Shape):
         intersection.pos = self.pos_to_world(local_pos)
         intersection.n = self.normal_to_world(normalize(local_pos))
         intersection.uv = self._get_uv_for_local_pos(local_pos)
-        intersection.sample_pdf = uniform_sphere_pdf()
+        intersection.sample_pdf = self.sample_pdf()
         intersection.mat = self.material
         return intersection
 

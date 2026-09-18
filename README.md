@@ -109,34 +109,7 @@ This stage also implements sampling from specified one-dimensional and two-dimen
 ![Triangle sampling](pics/sample_triangle.png)
 
 ### Distribution Sampling Results
-#### One-Dimensional Distribution
 
-![One-dimensional distribution sampling](pics/sample_distribution_1d.png)
-
-#### Two-Dimensional Distribution
-
-![Two-dimensional distribution sampling](pics/sample_distribution_2d.png)
-
-### Monte Carlo Integration
-
-The next step applies Monte Carlo integration to estimate the integrals of `2x` and `cos(x)`. The estimator compares uniform sampling with a sampling method whose probability density function (PDF) is proportional to `cos(x)`. The implementation and experiment are in [`examples/monte_carlo_estimator.py`](examples/monte_carlo_estimator.py).
-
-| Integrand | Uniform sampling | Cosine-proportional sampling |
-| --- | --- | --- |
-| `2x` | ![Monte Carlo estimate of 2x with uniform sampling](pics/monte_carlo_2x_uni.png) | ![Monte Carlo estimate of 2x with cosine-proportional sampling](pics/monte_carlo_2x_cos.png) |
-| `cos(x)` | ![Monte Carlo estimate of cos(x) with uniform sampling](pics/monte_carlo_cos_uni.png) | ![Monte Carlo estimate of cos(x) with cosine-proportional sampling](pics/monte_carlo_cos_cos.png) |
-
-## Stage 4: Camera and Image Rendering
-
-The fourth stage implements a custom camera that generates view rays and renders images directly, without requiring PyOpenGL for display. The camera implementation is in [`raytracing/camera.py`](raytracing/camera.py), with supporting camera utilities in [`raytracing/camera_util.py`](raytracing/camera_util.py).
-
-The camera and image-rendering example is [`examples/camera_and_image.py`](examples/camera_and_image.py). It renders spheres, multiple spheres, a cube, and multiple triangles using the custom camera library.
-
-### Camera Rendering Results
-
-| Sphere | Multiple spheres |
-| --- | --- |
-=======
 #### One-Dimensional Distribution
 
 ![One-dimensional distribution sampling](pics/sample_distribution_1d.png)

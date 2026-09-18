@@ -80,7 +80,11 @@ The construction methods are demonstrated in [`examples/bounding_volume_hierarch
 
 ![BVH Morton-code construction demo](pics/bvh_morton_code.gif)
 
+<<<<<<< HEAD
 ## Stage 3: Sampling Methods and Distributions
+=======
+## Stage 3: Monte Carlo Estimator and Sampling Methods
+>>>>>>> 560fbdd (edit readme)
 
 The third stage prepares the renderer for Monte Carlo integration by implementing sampling methods for common geometric domains. The sampling utilities are in [`raytracing/shapes/shape_sample_util.py`](raytracing/shapes/shape_sample_util.py).
 
@@ -110,6 +114,73 @@ This stage also implements sampling from specified one-dimensional and two-dimen
 
 ### Distribution Sampling Results
 
+<<<<<<< HEAD
 | One-dimensional distribution | Two-dimensional distribution |
 | --- | --- |
 | ![One-dimensional distribution sampling](pics/sample_distribution_1d.png) | ![Two-dimensional distribution sampling](pics/sample_distribution_2d.png) |
+=======
+#### One-Dimensional Distribution
+
+![One-dimensional distribution sampling](pics/sample_distribution_1d.png)
+
+#### Two-Dimensional Distribution
+
+![Two-dimensional distribution sampling](pics/sample_distribution_2d.png)
+
+### Monte Carlo Integration
+
+The next step applies Monte Carlo integration to estimate the integrals of `2x` and `cos(x)`. The estimator compares uniform sampling with a sampling method whose probability density function (PDF) is proportional to `cos(x)`. The implementation and experiment are in [`examples/monte_carlo_estimator.py`](examples/monte_carlo_estimator.py).
+
+| Integrand | Uniform sampling | Cosine-proportional sampling |
+| --- | --- | --- |
+| `2x` | ![Monte Carlo estimate of 2x with uniform sampling](pics/monte_carlo_2x_uni.png) | ![Monte Carlo estimate of 2x with cosine-proportional sampling](pics/monte_carlo_2x_cos.png) |
+| `cos(x)` | ![Monte Carlo estimate of cos(x) with uniform sampling](pics/monte_carlo_cos_uni.png) | ![Monte Carlo estimate of cos(x) with cosine-proportional sampling](pics/monte_carlo_cos_cos.png) |
+
+## Stage 4: Camera and Image Rendering
+
+The fourth stage implements a custom camera that generates view rays and renders images directly, without requiring PyOpenGL for display. The camera implementation is in [`raytracing/camera.py`](raytracing/camera.py), with supporting camera utilities in [`raytracing/camera_util.py`](raytracing/camera_util.py).
+
+The camera and image-rendering example is [`examples/camera_and_image.py`](examples/camera_and_image.py). It renders spheres, multiple spheres, a cube, and multiple triangles using the custom camera library.
+
+### Camera Rendering Results
+
+| Sphere | Multiple spheres |
+| --- | --- |
+| ![Rendered sphere](pics/camera_sphere.png) | ![Rendered spheres](pics/camera_spheres.png) |
+| Cube | Multiple triangles |
+| ![Rendered cube](pics/camera_cube.png) | ![Rendered triangles](pics/camera_triangles.png) |
+
+## Stage 5: Direct Lighting
+
+The fifth stage implements direct lighting in [`raytracing/ray_tracers/direct_ray_tracer.py`](raytracing/ray_tracers/direct_ray_tracer.py). It introduces the Lambertian reflection model in [`raytracing/bxdfs/lambertian.py`](raytracing/bxdfs/lambertian.py), along with point, spot, and area light implementations in [`raytracing/lights`](raytracing/lights).
+
+### Point Light Rendering Results
+
+| Sphere | Cube |
+| --- | --- |
+| ![Direct lighting sphere with point light](pics/dl_sphere_point.png) | ![Direct lighting cube with point light](pics/dl_cube_point.png) |
+| Sphere and cube | Sphere, cube, and triangle |
+| ![Direct lighting sphere and cube with point light](pics/dl_sphere_cube_point.png) | ![Direct lighting sphere, cube, and triangle with point light](pics/dl_sphere_cube_triangle_point.png) |
+
+### Combined Scene with Different Light Sources
+
+| Point light | Area light |
+| --- | --- |
+| ![Sphere, cube, and triangle with point light](pics/dl_sphere_cube_triangle_point.png) | ![Sphere, cube, and triangle with area light](pics/dl_sphere_cube_triangle_area.png) |
+| Sphere, cube, and triangle with spot light | Rabbit with spot light |
+| ![Sphere, cube, and triangle with spot lights](pics/dl_sphere_cube_triangle_spot.png) | ![Rabbit with spot light](pics/dl_rabbit_spot.png) |
+
+## Stage 6: Indirect Lighting
+
+The next stage implements indirect lighting in [`raytracing/ray_tracers/path_tracer.py`](raytracing/ray_tracers/path_tracer.py). Unlike direct lighting, indirect lighting accounts for light that bounces between surfaces before reaching the camera.
+
+### Indirect Lighting Example
+
+![Indirect lighting between a red and white square](pics/idl_square_point.png)
+
+This simple example places a point light between a red square and a white square. The white square receives reflected light from the red square, demonstrating color bleeding caused by indirect illumination.
+
+## To Be Continued
+
+More rendering features and performance improvements are planned for future stages.
+>>>>>>> 560fbdd (edit readme)

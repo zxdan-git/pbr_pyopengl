@@ -4,7 +4,7 @@ This project builds a physically based rendering (PBR) pipeline from scratch in 
 
 The goal is to implement the core rendering, mathematics, and PBR logic while exploring how the same pipeline can be accelerated at different levels of the system.
 
-## Development Stages
+## Project Roadmap
 
 1. **Python implementation**: Build the rendering pipeline from scratch using Python, with an emphasis on understanding and implementing the algorithms described in PBRT.
 2. **CPU acceleration**: Use CPU multithreading to improve the performance of computationally intensive rendering tasks.
@@ -12,9 +12,9 @@ The goal is to implement the core rendering, mathematics, and PBR logic while ex
 
 The `raytracing` package contains the core rendering, math, geometry, lighting, and material components used by the examples in this project.
 
-## Stage 1: Basic 3D Math and Ray Intersections
+## Part 1: Basic 3D Math and Ray Intersections
 
-The first stage focuses on building the basic 3D mathematics needed by a rendering pipeline. The initial implementations are in [`raytracing/shape.py`](raytracing/shape.py), [`raytracing/shapes/*.py`](raytracing/shapes/), [`raytracing/transform.py`](raytracing/transform.py), [`raytracing/util.py`](raytracing/util.py), [`raytracing/ray.py`](raytracing/ray.py), and [`raytracing/bounding_box.py`](raytracing/bounding_box.py). Since the rendering pipeline is not yet implemented, [PyOpenGL](https://pyopengl.sourceforge.net/) is used to display the demonstrations through the helpers in [`raytracing/glutil.py`](raytracing/glutil.py).
+The first part focuses on building the basic 3D mathematics needed by a rendering pipeline. The initial implementations are in [`raytracing/shape.py`](raytracing/shape.py), [`raytracing/shapes/*.py`](raytracing/shapes/), [`raytracing/transform.py`](raytracing/transform.py), [`raytracing/util.py`](raytracing/util.py), [`raytracing/ray.py`](raytracing/ray.py), and [`raytracing/bounding_box.py`](raytracing/bounding_box.py). Since the rendering pipeline is not yet implemented, [PyOpenGL](https://pyopengl.sourceforge.net/) is used to display the demonstrations through the helpers in [`raytracing/glutil.py`](raytracing/glutil.py).
 
 The first demo, [`examples/ray_shape_intersect.py`](examples/ray_shape_intersect.py), generates a ray from the cursor position and tests whether it intersects a sphere, cube, or triangle. When an intersection is detected, the shape is rendered in red.
 
@@ -42,9 +42,9 @@ The first demo, [`examples/ray_shape_intersect.py`](examples/ray_shape_intersect
 
 ![Multi-shapes intersection](pics/multi_intersection.gif)
 
-## Stage 2: Bounding Volume Hierarchy
+## Part 2: Bounding Volume Hierarchy
 
-The second stage introduces a bounding volume hierarchy (BVH) to accelerate the ray tracing process. The BVH implementation is in [`raytracing/bounding_volume_hierarchy.py`](raytracing/bounding_volume_hierarchy.py), with supporting utilities in [`raytracing/bvh_util/*.py`](raytracing/bvh_util).
+The second part introduces a bounding volume hierarchy (BVH) to accelerate the ray tracing process. The BVH implementation is in [`raytracing/bounding_volume_hierarchy.py`](raytracing/bounding_volume_hierarchy.py), with supporting utilities in [`raytracing/bvh_util/*.py`](raytracing/bvh_util).
 
 This project explores four BVH construction methods:
 
@@ -80,11 +80,11 @@ The construction methods are demonstrated in [`examples/bounding_volume_hierarch
 
 ![BVH Morton-code construction demo](pics/bvh_morton_code.gif)
 
-## Stage 3: Monte Carlo Estimator and Sampling Methods
+## Part 3: Monte Carlo Estimator and Sampling Methods
 
-The third stage prepares the renderer for Monte Carlo integration by implementing sampling methods for common geometric domains. The sampling utilities are in [`raytracing/shapes/shape_sample_util.py`](raytracing/shapes/shape_sample_util.py).
+The third part prepares the renderer for Monte Carlo integration by implementing sampling methods for common geometric domains. The sampling utilities are in [`raytracing/shapes/shape_sample_util.py`](raytracing/shapes/shape_sample_util.py).
 
-This stage also implements sampling from specified one-dimensional and two-dimensional distributions in [`raytracing/distributon.py`](raytracing/distributon.py). The distribution sampling demo is [`examples/sample_distributions.py`](examples/sample_distributions.py).
+This part also implements sampling from specified one-dimensional and two-dimensional distributions in [`raytracing/distributon.py`](raytracing/distributon.py). The distribution sampling demo is [`examples/sample_distributions.py`](examples/sample_distributions.py).
 
 ### Shape Sampling Results
 
@@ -127,9 +127,9 @@ The next step applies Monte Carlo integration to estimate the integrals of `2x` 
 | `2x` | ![Monte Carlo estimate of 2x with uniform sampling](pics/monte_carlo_2x_uni.png) | ![Monte Carlo estimate of 2x with cosine-proportional sampling](pics/monte_carlo_2x_cos.png) |
 | `cos(x)` | ![Monte Carlo estimate of cos(x) with uniform sampling](pics/monte_carlo_cos_uni.png) | ![Monte Carlo estimate of cos(x) with cosine-proportional sampling](pics/monte_carlo_cos_cos.png) |
 
-## Stage 4: Camera and Image Rendering
+## Part 4: Camera and Image Rendering
 
-The fourth stage implements a custom camera that generates view rays and renders images directly, without requiring PyOpenGL for display. The camera implementation is in [`raytracing/camera.py`](raytracing/camera.py), with supporting camera utilities in [`raytracing/camera_util.py`](raytracing/camera_util.py).
+The fourth part implements a custom camera that generates view rays and renders images directly, without requiring PyOpenGL for display. The camera implementation is in [`raytracing/camera.py`](raytracing/camera.py), with supporting camera utilities in [`raytracing/camera_util.py`](raytracing/camera_util.py).
 
 The camera and image-rendering example is [`examples/camera_and_image.py`](examples/camera_and_image.py). It renders spheres, multiple spheres, a cube, and multiple triangles using the custom camera library.
 
@@ -141,9 +141,9 @@ The camera and image-rendering example is [`examples/camera_and_image.py`](examp
 | Cube | Multiple triangles |
 | ![Rendered cube](pics/camera_cube.png) | ![Rendered triangles](pics/camera_triangles.png) |
 
-## Stage 5: Direct Lighting
+## Part 5: Direct Lighting
 
-The fifth stage implements direct lighting in [`raytracing/ray_tracers/direct_ray_tracer.py`](raytracing/ray_tracers/direct_ray_tracer.py). It introduces the Lambertian reflection model in [`raytracing/bxdfs/lambertian.py`](raytracing/bxdfs/lambertian.py), along with point, spot, and area light implementations in [`raytracing/lights`](raytracing/lights).
+The fifth part implements direct lighting in [`raytracing/ray_tracers/direct_ray_tracer.py`](raytracing/ray_tracers/direct_ray_tracer.py). It introduces the Lambertian reflection model in [`raytracing/bxdfs/lambertian.py`](raytracing/bxdfs/lambertian.py), along with point, spot, and area light implementations in [`raytracing/lights`](raytracing/lights).
 
 ### Point Light Rendering Results
 
@@ -161,9 +161,9 @@ The fifth stage implements direct lighting in [`raytracing/ray_tracers/direct_ra
 | Sphere, cube, and triangle with spot light | Rabbit with spot light |
 | ![Sphere, cube, and triangle with spot lights](pics/dl_sphere_cube_triangle_spot.png) | ![Rabbit with spot light](pics/dl_rabbit_spot.png) |
 
-## Stage 6: Indirect Lighting
+## Part 6: Indirect Lighting
 
-The next stage implements indirect lighting in [`raytracing/ray_tracers/path_tracer.py`](raytracing/ray_tracers/path_tracer.py). Unlike direct lighting, indirect lighting accounts for light that bounces between surfaces before reaching the camera.
+The next part implements indirect lighting in [`raytracing/ray_tracers/path_tracer.py`](raytracing/ray_tracers/path_tracer.py). Unlike direct lighting, indirect lighting accounts for light that bounces between surfaces before reaching the camera.
 
 ### Indirect Lighting Example
 
@@ -173,4 +173,4 @@ This simple example places a point light between a red square and a white square
 
 ## To Be Continued
 
-More rendering features and performance improvements are planned for future stages.
+More rendering features and performance improvements are planned for future parts.

@@ -80,11 +80,7 @@ The construction methods are demonstrated in [`examples/bounding_volume_hierarch
 
 ![BVH Morton-code construction demo](pics/bvh_morton_code.gif)
 
-<<<<<<< HEAD
-## Stage 3: Sampling Methods and Distributions
-=======
 ## Stage 3: Monte Carlo Estimator and Sampling Methods
->>>>>>> 560fbdd (edit readme)
 
 The third stage prepares the renderer for Monte Carlo integration by implementing sampling methods for common geometric domains. The sampling utilities are in [`raytracing/shapes/shape_sample_util.py`](raytracing/shapes/shape_sample_util.py).
 
@@ -113,11 +109,33 @@ This stage also implements sampling from specified one-dimensional and two-dimen
 ![Triangle sampling](pics/sample_triangle.png)
 
 ### Distribution Sampling Results
+#### One-Dimensional Distribution
 
-<<<<<<< HEAD
-| One-dimensional distribution | Two-dimensional distribution |
+![One-dimensional distribution sampling](pics/sample_distribution_1d.png)
+
+#### Two-Dimensional Distribution
+
+![Two-dimensional distribution sampling](pics/sample_distribution_2d.png)
+
+### Monte Carlo Integration
+
+The next step applies Monte Carlo integration to estimate the integrals of `2x` and `cos(x)`. The estimator compares uniform sampling with a sampling method whose probability density function (PDF) is proportional to `cos(x)`. The implementation and experiment are in [`examples/monte_carlo_estimator.py`](examples/monte_carlo_estimator.py).
+
+| Integrand | Uniform sampling | Cosine-proportional sampling |
+| --- | --- | --- |
+| `2x` | ![Monte Carlo estimate of 2x with uniform sampling](pics/monte_carlo_2x_uni.png) | ![Monte Carlo estimate of 2x with cosine-proportional sampling](pics/monte_carlo_2x_cos.png) |
+| `cos(x)` | ![Monte Carlo estimate of cos(x) with uniform sampling](pics/monte_carlo_cos_uni.png) | ![Monte Carlo estimate of cos(x) with cosine-proportional sampling](pics/monte_carlo_cos_cos.png) |
+
+## Stage 4: Camera and Image Rendering
+
+The fourth stage implements a custom camera that generates view rays and renders images directly, without requiring PyOpenGL for display. The camera implementation is in [`raytracing/camera.py`](raytracing/camera.py), with supporting camera utilities in [`raytracing/camera_util.py`](raytracing/camera_util.py).
+
+The camera and image-rendering example is [`examples/camera_and_image.py`](examples/camera_and_image.py). It renders spheres, multiple spheres, a cube, and multiple triangles using the custom camera library.
+
+### Camera Rendering Results
+
+| Sphere | Multiple spheres |
 | --- | --- |
-| ![One-dimensional distribution sampling](pics/sample_distribution_1d.png) | ![Two-dimensional distribution sampling](pics/sample_distribution_2d.png) |
 =======
 #### One-Dimensional Distribution
 
@@ -183,4 +201,3 @@ This simple example places a point light between a red square and a white square
 ## To Be Continued
 
 More rendering features and performance improvements are planned for future stages.
->>>>>>> 560fbdd (edit readme)

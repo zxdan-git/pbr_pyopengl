@@ -1,14 +1,31 @@
 # pbr_pyopengl
 
-This project builds a physically based rendering (PBR) pipeline from scratch in Python, following the theory and implementation approach presented in [Physically Based Rendering: From Theory to Implementation, 3rd Edition](https://pbr-book.org/3ed-2018/contents) (PBRT).
+A physically based renderer built from scratch in Python as a hands-on exploration of rendering algorithms, acceleration structures, Monte Carlo methods, and light transport.
 
-The goal is to implement the core rendering, mathematics, and PBR logic while exploring how the same pipeline can be accelerated at different levels of the system.
+The project is based on concepts from [Physically Based Rendering: From Theory to Implementation, 3rd Edition](https://pbr-book.org/3ed-2018/contents) (PBRT), but the implementations, experiments, interactive visualizations, and rendering pipeline are developed independently as part of the project.
 
 ## Project Roadmap
 
-1. **Python implementation**: Build the rendering pipeline from scratch using Python, with an emphasis on understanding and implementing the algorithms described in PBRT.
-2. **CPU acceleration**: Use CPU multithreading to improve the performance of computationally intensive rendering tasks.
-3. **GPU acceleration**: Use PyOpenGL shaders to move suitable rendering workloads to the GPU.
+The project is being developed incrementally, from foundational geometry and sampling algorithms to a complete rendering pipeline and hardware acceleration.
+
+1. **Rendering fundamentals**: Implement the core mathematics, geometry, sampling, lighting, materials, and light-transport algorithms from scratch in Python.
+2. **CPU acceleration**: Explore multithreading and other CPU-side optimizations for computationally intensive rendering workloads.
+3. **GPU acceleration**: Move suitable parts of the rendering pipeline to the GPU using PyOpenGL and shaders.
+
+## Current Progress
+
+The core rendering workflow is implemented through the following parts:
+
+| Part | Focus | Status |
+| --- | --- | --- |
+| 1 | Geometry and ray intersection | Complete |
+| 2 | BVH acceleration | Complete |
+| 3 | Monte Carlo sampling and integration | Complete |
+| 4 | Camera and image rendering | Complete |
+| 5 | Direct lighting | Complete |
+| 6 | Indirect lighting | Ongoing |
+
+**Next focus:** Extend the renderer with additional features and explore CPU and GPU acceleration.
 
 The `raytracing` package contains the core rendering, math, geometry, lighting, and material components used by the examples in this project.
 
